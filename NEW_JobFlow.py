@@ -1,6 +1,5 @@
 import numpy as np
 import numpy as np
-import pandas as pd
 from torch.utils.tensorboard import SummaryWriter
 from NEW_Traceback import BEST_PATH
 from copy import deepcopy
