@@ -15,7 +15,7 @@ class PPO:
         self.act_clip_grad=act_clip_grad
         self.cri_clip_grad=cri_clip_grad
         self.beta=beta
-        self.anet=anet
+        self.actor=anet
         self.cnet=cnet
         self.aoptim=aoptim
         self.coptim=coptim
@@ -25,9 +25,9 @@ class PPO:
         self.explore=True
     
     def take_action(self,state:np.ndarray):
-        # a=self.anet(fstate(lambda x:torch.tensor(x,dtype=torch.float32).to(self.device),state))[0]
+        # a=self.actor(fstate(lambda x:torch.tensor(x,dtype=torch.float32).to(self.device),state))[0]
         F=lambda x:torch.tensor(np.array(x),dtype=torch.float32).to(self.device)
-        a=self.anet(F(state).unsqueeze(0))[0]
+        a=self.actor(F(state).unsqueeze(0))[0]
         if self.explore:
             b=torch.distributions.Categorical(logits=a).sample().detach().cpu().numpy()
             act=np.zeros(a.shape,dtype='int32')
@@ -60,10 +60,10 @@ class PPO:
         dones=transition_dict['dones']
         # print('dones',dones)
         advantage=NEW_rl_utils.compute_advantage_batch(self.gamma, self.labda,td_delta.cpu(),dones).to(self.device).detach()
-        old_log_probs=(FU.log_softmax(self.anet(states),dim=-1)*actions).sum(dim=-1).sum(dim=-1).detach()
+        old_log_probs=(FU.log_softmax(self.actor(states),dim=-1)*actions).sum(dim=-1).sum(dim=-1).detach()
 
         for _ in range(self.epochs):
-            probs=self.anet(states)
+            probs=self.actor(states)
             log_probs = (FU.log_softmax(probs,dim=-1)*actions).sum(dim=-1).sum(dim=-1)
             ratio = torch.exp(log_probs - old_log_probs)
             surr1 = ratio * advantage
@@ -73,10 +73,10 @@ class PPO:
             critic_loss=torch.mean(FU.mse_loss(self.cnet(states), td_target.detach()))
             loss=epo_loss+actor_loss+critic_loss
             assert torch.isnan(loss)==0 or torch.isinf(loss)==0,'loss wrong'
-            self.anet.zero_grad()
+            self.actor.zero_grad()
             (actor_loss+epo_loss).backward()
             if not self.act_clip_grad=='max':
-                nn_utils.clip_grad_norm_(self.anet.parameters(),self.act_clip_grad)
+                nn_utils.clip_grad_norm_(self.actor.parameters(),self.act_clip_grad)
             self.aoptim.step()
             self.cnet.zero_grad()
             critic_loss.backward()
@@ -94,7 +94,7 @@ class PPO:
             # grad_max = 0.0
             # grad_means = 0.0
             # grad_count = 0
-            # for p in self.anet.parameters():
+            # for p in self.actor.parameters():
             #     grad_max = max(grad_max, p.grad.abs().max().item())
             #     grad_means += (p.grad ** 2).mean().sqrt().item()
             #     grad_count += 1
@@ -109,6 +109,6 @@ class PPO:
             #     grad_count += 1
             # self.writer.add_scalar('c_grad_l2', grad_means / grad_count, self.step)
             # self.writer.add_scalar('c_grad_max', grad_max, self.step)
-            # probs_new=self.anet(states)
+            # probs_new=self.actor(states)
             # kl=((FU.log_softmax(probs_new,dim=-1)-FU.log_softmax(probs,dim=-1))*FU.softmax(probs_new,dim=-1)).sum(dim=-1).mean().item() # not accurate
             # self.writer.add_scalar('KL', kl, self.step)

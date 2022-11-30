@@ -10,6 +10,8 @@ def FMakeNet(input,middle,output,deep):
         middle=output
     for i in range(deep):
         layer.append(nn.PReLU())
+        # layer.append(nn.ReLU())
+        # layer.append(nn.SELU())
         if i==0:
             layer.append(nn.Linear(input,middle))
         elif i==deep-1:
@@ -21,7 +23,7 @@ def FMakeNet(input,middle,output,deep):
 class CriticNet(nn.Module):
     def __init__(self,input_size,base_deep,base_width):
         super().__init__()
-        self.base_net=nn.Sequential(*FMakeNet(input_size,base_width,1,base_deep))
+        self.base_net=nn.Sequential(nn.Linear(input_size,base_width),*FMakeNet(base_width,base_width,1,base_deep-1))
     
     def __call__(self,x:torch.tensor):
         return self.base_net(x)
@@ -34,9 +36,9 @@ class QNet(nn.Module):
         super().__init__()
         assert top_deep
         self.pros=output_size
-        self.base_net=FMakeNet(input_size,base_width,base_width,base_deep)
+        self.base_net=FMakeNet(base_width,base_width,base_width,base_deep-1)
         if len(self.base_net):
-            self.base_net=nn.Sequential(*self.base_net)
+            self.base_net=nn.Sequential(nn.Linear(input_size,base_width),*self.base_net)
         else:
             self.base_net=None
             base_width=input_size
@@ -64,7 +66,7 @@ class QNet2(nn.Module):
         super().__init__()
         self.task_num=task_num
         self.pro_num=pro_num
-        self.net=nn.Sequential(*FMakeNet(input_size,width,task_num*pro_num,deep))
+        self.net=nn.Sequential(nn.Linear(input_size,width),*FMakeNet(width,width,task_num*pro_num,deep-1))
     
     def __call__(self,x:torch.tensor):
         out=self.net(x).reshape(x.shape[0],self.task_num,-1)

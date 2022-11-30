@@ -157,7 +157,8 @@ def train_off_policy_agent(test_seed,env, agent, num_episodes, replay_buffer, mi
                 return_list.append(episode_return)
                 if replay_buffer.size > minimal_size and (i_episode+1) % test_cycles == 0:
                     agent.explore=False
-                    test_return=model_test(test_seed,env,agent,test_epochs)
+                    with torch.no_grad():
+                        test_return=model_test(test_seed,env,agent,test_epochs)
                     agent.explore=True
                     pbar.set_postfix({'episode': '%d' % (num_episodes/10 * i + i_episode+1),
                                       'return': '%.3f' % np.mean(return_list[-10:]),

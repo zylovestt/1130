@@ -9,9 +9,10 @@ from NEW_TEST import model_test
 import random
 import torch
 
-random.seed(81)
-np.random.seed(71)
-torch.manual_seed(51)
+random.seed(851)
+np.random.seed(761)
+torch.manual_seed(531)
+torch.backends.cudnn.benchmark=True
 device='cuda'
 writer=SummaryWriter(comment='NEW_ENV')
 pro_config={'c':(10,2),'r':(50,10),'v':(10,2)}
@@ -29,7 +30,12 @@ JF=Job_Flow(0,jc,tasknum,env_steps)
 JF.cal_mean_scale(1000)
 env=NEW_ENV(PF,JF,env_steps,writer)
 # print(env.pf.pros.ps)
-env.normalize(100)
+# env.normalize(100)
+# np.save('md',env.md)
+# np.save('sd',env.sd)
+env.md=np.load('md.npy')
+env.sd=np.load('sd.npy')
+print('md',env.md,'sd',env.sd)
 state=env.reset()
 
 # anet=QNet(state.size,1,500,2,500,env.pros.num,env.jf.tasknum).to(device)
@@ -49,3 +55,10 @@ qnet=QNet2(state.size,3,500,env.pros.num,env.jf.tasknum).to(device)
 td3_anet=QNet2(state.size,3,500,env.pros.num,env.jf.tasknum).to(device)
 td3_qnet1=CriticNet(state.size+env.pros.num*env.jf.tasknum,3,500).to(device)
 td3_qnet2=CriticNet(state.size+env.pros.num*env.jf.tasknum,3,500).to(device)
+
+print(anet)
+print(cnet)
+print(qnet)
+print(td3_anet)
+print(td3_qnet1)
+print(td3_qnet2)
