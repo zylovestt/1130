@@ -46,6 +46,8 @@ class NEW_ENV:
         D=np.array(self.D)
         self.md=np.mean(D)
         self.sd=np.std(D)
+        # self.md=(np.max(D)+np.min(D))/2
+        # self.sd=np.max(D)
         assert self.sd,'std is zero'
         print('MD:',self.md,'SD:',self.sd,'DIV:',self.sd/self.md)
         self.D.clear()

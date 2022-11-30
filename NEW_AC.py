@@ -86,24 +86,25 @@ class AC:
         self.writer.add_scalar('epo_loss',epo_loss,self.step)
         self.writer.add_scalar('actor_loss',actor_loss,self.step)
         self.writer.add_scalar('total_loss',loss,self.step)
-        grad_max = 0.0
-        grad_means = 0.0
-        grad_count = 0
-        for p in self.anet.parameters():
-            grad_max = max(grad_max, p.grad.abs().max().item())
-            grad_means += (p.grad ** 2).mean().sqrt().item()
-            grad_count += 1
-        self.writer.add_scalar('a_grad_l2', grad_means / grad_count, self.step)
-        self.writer.add_scalar('a_grad_max', grad_max, self.step)
-        grad_max = 0.0
-        grad_means = 0.0
-        grad_count = 0
-        for p in self.cnet.parameters():
-            grad_max = max(grad_max, p.grad.abs().max().item())
-            grad_means += (p.grad ** 2).mean().sqrt().item()
-            grad_count += 1
-        self.writer.add_scalar('c_grad_l2', grad_means / grad_count, self.step)
-        self.writer.add_scalar('c_grad_max', grad_max, self.step)
-        probs_new=self.anet(states)
-        kl=((FU.log_softmax(probs_new,dim=-1)-FU.log_softmax(probs,dim=-1))*FU.softmax(probs_new,dim=-1)).sum(dim=-1).mean().item() # not accurate
-        self.writer.add_scalar('KL', kl, self.step)
+        
+        # grad_max = 0.0
+        # grad_means = 0.0
+        # grad_count = 0
+        # for p in self.anet.parameters():
+        #     grad_max = max(grad_max, p.grad.abs().max().item())
+        #     grad_means += (p.grad ** 2).mean().sqrt().item()
+        #     grad_count += 1
+        # self.writer.add_scalar('a_grad_l2', grad_means / grad_count, self.step)
+        # self.writer.add_scalar('a_grad_max', grad_max, self.step)
+        # grad_max = 0.0
+        # grad_means = 0.0
+        # grad_count = 0
+        # for p in self.cnet.parameters():
+        #     grad_max = max(grad_max, p.grad.abs().max().item())
+        #     grad_means += (p.grad ** 2).mean().sqrt().item()
+        #     grad_count += 1
+        # self.writer.add_scalar('c_grad_l2', grad_means / grad_count, self.step)
+        # self.writer.add_scalar('c_grad_max', grad_max, self.step)
+        # probs_new=self.anet(states)
+        # kl=((FU.log_softmax(probs_new,dim=-1)-FU.log_softmax(probs,dim=-1))*FU.softmax(probs_new,dim=-1)).sum(dim=-1).mean().item() # not accurate
+        # self.writer.add_scalar('KL', kl, self.step)

@@ -26,12 +26,8 @@ class CriticNet(nn.Module):
     def __call__(self,x:torch.tensor):
         return self.base_net(x)
     
-    def _init_weights(self, m):
-        if isinstance(m, nn.Conv2d):
-            nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="prelu")
-        elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
-            nn.init.constant_(m.weight, 1)
-            nn.init.constant_(m.bias, 0)
+    # def _init_weights(self, m):
+    #     nn.init.kaiming_normal_(m.weight)
 
 class QNet(nn.Module):
     def __init__(self,input_size,base_deep,base_width,top_deep,top_width,output_size,outnet_num):
@@ -60,12 +56,8 @@ class QNet(nn.Module):
         a*=(~(mask==1))
         return out-a
     
-    def _init_weights(self, m):
-        if isinstance(m, nn.Conv2d):
-            nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="prelu")
-        elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
-            nn.init.constant_(m.weight, 1)
-            nn.init.constant_(m.bias, 0)
+    # def _init_weights(self, m):
+    #     nn.init.kaiming_normal_(m.weight)
 
 class QNet2(nn.Module):
     def __init__(self,input_size,deep,width,pro_num,task_num):
@@ -82,9 +74,5 @@ class QNet2(nn.Module):
         a*=(~(mask==1))
         return out-a
     
-    def _init_weights(self, m):
-        if isinstance(m, nn.Conv2d):
-            nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="prelu")
-        elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
-            nn.init.constant_(m.weight, 1)
-            nn.init.constant_(m.bias, 0)
+    # def _init_weights(self, m):
+    #     nn.init.kaiming_normal_(m.weight)

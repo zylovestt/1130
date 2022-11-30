@@ -15,12 +15,14 @@ torch.manual_seed(51)
 device='cuda'
 writer=SummaryWriter(comment='NEW_ENV')
 pro_config={'c':(10,2),'r':(50,10),'v':(10,2)}
+# pro_config={'c':(2,20),'r':(10,100),'v':(5,20)}
 pro_num=8
 pro_config['num_pro']=0.9
 # pro_config['num_pro']=np.ones(pro_num)/pro_num
 # pro_config['num_pro']=[0,0,0,0,1]
 PF=Pro_Flow(1,0,pro_config,pro_num,writer,True)
 jc={'k':0.5,'r':(100,10),'loc_mean':(-100,100),'loc_scale':1,'time':(20,0)}
+# jc={'k':0.5,'r':(10,200),'loc_mean':(-100,100),'loc_scale':1,'time':(20,0)}
 tasknum=8
 env_steps=100
 JF=Job_Flow(0,jc,tasknum,env_steps)

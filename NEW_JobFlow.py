@@ -107,6 +107,7 @@ class Pro_Flow:
             p={key:[0]*n for key in columns}
             # p=pd.DataFrame(np.zeros((self.num,len(columns))),columns=columns)
             RF=lambda x,y:rng.normal(*self.pro_config[x],y)
+            # RF=lambda x,y:rng.uniform(*self.pro_config[x],y)
             # num_pro=self.rng.choice(self.num,p=self.pro_config['num_pro'])+1
             num_pro=self.rng.binomial(n-1,self.pro_config['num_pro'])+1
             s=slice(0,num_pro,None)
@@ -156,6 +157,7 @@ class Job_Flow:
         a[:]=np.arange(tasknum).reshape(1,-1)
         self.k_mask=(a<=self.k_num.reshape(-1,1)).astype('float')
         self.r=rng.normal(*job_config['r'],size)
+        # self.r=rng.uniform(*job_config['r'],size)
         assert (self.r>=0).all()
         loc_mean=rng.uniform(*job_config['loc_mean'],max_length)
         scale=job_config['loc_scale']
