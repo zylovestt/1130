@@ -64,12 +64,13 @@ class PROS:
                 d_l['o'].append(p['beta'])
                 d_l['t'].append(best_path.shortest_time-begin_b)
             if self.ps[index]['k']:
+                pass
                 # self.ps.at[index,'alpha']=p['alpha']
                 # self.ps.at[index,'beta']=p['beta']
                 # self.ps.at[index,'lx']=p['lx']
                 # self.ps.at[index,'ly']=p['ly']
-                self.writer.add_scalar(str(index)+':alpha',p['alpha'],self.global_step)
-                self.writer.add_scalar(str(index)+':beta',p['beta'],self.global_step)
+                # self.writer.add_scalar(str(index)+':alpha',p['alpha'],self.global_step)
+                # self.writer.add_scalar(str(index)+':beta',p['beta'],self.global_step)
                 # self.writer.add_scalar(str(index)+':loc',np.linalg.norm(old_loc-np.array([p['lx'],p['ly']]))/p['v'],self.global_step)
         #     print('i ',index)
         # print('loc:',self.ps['loc'])
@@ -84,9 +85,14 @@ class Pro_Flow:
         self.num=num
         self.writer=writer
         self.change=change
-        self.fq=lambda s:lambda rng,x:rng.uniform(*s,x)
+        # self.fq=lambda s:lambda rng,x:rng.uniform(*s,x)
         self.pros=None
     
+    def fq(s):
+        def f(rng,x):
+            return rng.uniform(*s,x)
+        return f
+
     def set_train_mode(self):
         self.pros.set_train_mode()
         self.rng=self.train_rng

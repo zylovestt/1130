@@ -9,56 +9,55 @@ from NEW_TEST import model_test
 import random
 import torch
 
-random.seed(851)
-np.random.seed(761)
-torch.manual_seed(531)
-torch.backends.cudnn.benchmark=True
-device='cuda'
-writer=SummaryWriter(comment='NEW_ENV')
-pro_config={'c':(10,2),'r':(50,10),'v':(10,2)}
-# pro_config={'c':(2,20),'r':(10,100),'v':(5,20)}
-pro_num=8
-pro_config['num_pro']=0.9
-# pro_config['num_pro']=np.ones(pro_num)/pro_num
-# pro_config['num_pro']=[0,0,0,0,1]
-PF=Pro_Flow(1,0,pro_config,pro_num,writer,True)
-jc={'k':0.5,'r':(100,10),'loc_mean':(-100,100),'loc_scale':1,'time':(20,0)}
-# jc={'k':0.5,'r':(10,200),'loc_mean':(-100,100),'loc_scale':1,'time':(20,0)}
-tasknum=8
-env_steps=100
-JF=Job_Flow(0,jc,tasknum,env_steps)
-JF.cal_mean_scale(1000)
-env=NEW_ENV(PF,JF,env_steps,writer)
-# print(env.pf.pros.ps)
-# env.normalize(100)
-# np.save('md',env.md)
-# np.save('sd',env.sd)
-env.md=np.load('md.npy')
-env.sd=np.load('sd.npy')
-print('md',env.md,'sd',env.sd)
-state=env.reset()
+def start_env():
+    device='cuda'
+    # writer=SummaryWriter(comment='NEW_ENV')
+    writer=None
+    pro_config={'c':(10,2),'r':(50,10),'v':(10,2)}
+    # pro_config={'c':(2,20),'r':(10,100),'v':(5,20)}
+    pro_num=8
+    pro_config['num_pro']=0.9
+    # pro_config['num_pro']=np.ones(pro_num)/pro_num
+    # pro_config['num_pro']=[0,0,0,0,1]
+    PF=Pro_Flow(1,0,pro_config,pro_num,writer,True)
+    jc={'k':0.5,'r':(100,10),'loc_mean':(-100,100),'loc_scale':1,'time':(20,0)}
+    # jc={'k':0.5,'r':(10,200),'loc_mean':(-100,100),'loc_scale':1,'time':(20,0)}
+    tasknum=8
+    env_steps=100
+    JF=Job_Flow(0,jc,tasknum,env_steps)
+    JF.cal_mean_scale(1000)
+    env=NEW_ENV(PF,JF,env_steps,writer)
+    # print(env.pf.pros.ps)
+    # env.normalize(100)
+    # np.save('md',env.md)
+    # np.save('sd',env.sd)
+    env.md=np.load('md.npy')
+    env.sd=np.load('sd.npy')
+    print('md',env.md,'sd',env.sd)
+    state=env.reset()
 
-# anet=QNet(state.size,1,500,2,500,env.pros.num,env.jf.tasknum).to(device)
-# cnet=CriticNet(state.size,3,500).to(device)
-# qnet=QNet(state.size,1,300,1,100,env.pros.num,env.jf.tasknum).to(device)
+    # anet=QNet(state.size,1,500,2,500,env.pros.num,env.jf.tasknum).to(device)
+    # cnet=CriticNet(state.size,3,500).to(device)
+    # qnet=QNet(state.size,1,300,1,100,env.pros.num,env.jf.tasknum).to(device)
 
-# td3_anet=QNet(state.size,1,500,2,500,env.pros.num,env.jf.tasknum).to(device)
-# td3_qnet1=CriticNet(state.size+env.pros.num*env.jf.tasknum,3,500).to(device)
-# td3_qnet2=CriticNet(state.size+env.pros.num*env.jf.tasknum,3,500).to(device)
+    # td3_anet=QNet(state.size,1,500,2,500,env.pros.num,env.jf.tasknum).to(device)
+    # td3_qnet1=CriticNet(state.size+env.pros.num*env.jf.tasknum,3,500).to(device)
+    # td3_qnet2=CriticNet(state.size+env.pros.num*env.jf.tasknum,3,500).to(device)
 
 
 
-anet=QNet2(state.size,3,500,env.pros.num,env.jf.tasknum).to(device)
-cnet=CriticNet(state.size,3,500).to(device)
-qnet=QNet2(state.size,3,500,env.pros.num,env.jf.tasknum).to(device)
+    anet=QNet2(state.size,3,500,env.pros.num,env.jf.tasknum).to(device)
+    cnet=CriticNet(state.size,3,500).to(device)
+    qnet=QNet2(state.size,3,500,env.pros.num,env.jf.tasknum).to(device)
 
-td3_anet=QNet2(state.size,3,500,env.pros.num,env.jf.tasknum).to(device)
-td3_qnet1=CriticNet(state.size+env.pros.num*env.jf.tasknum,3,500).to(device)
-td3_qnet2=CriticNet(state.size+env.pros.num*env.jf.tasknum,3,500).to(device)
+    td3_anet=QNet2(state.size,3,500,env.pros.num,env.jf.tasknum).to(device)
+    td3_qnet1=CriticNet(state.size+env.pros.num*env.jf.tasknum,3,500).to(device)
+    td3_qnet2=CriticNet(state.size+env.pros.num*env.jf.tasknum,3,500).to(device)
 
-print(anet)
-print(cnet)
-print(qnet)
-print(td3_anet)
-print(td3_qnet1)
-print(td3_qnet2)
+    print(anet)
+    print(cnet)
+    print(qnet)
+    print(td3_anet)
+    print(td3_qnet1)
+    print(td3_qnet2)
+    return env,anet,cnet,qnet,td3_anet,td3_qnet1,td3_qnet2,device,writer

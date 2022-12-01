@@ -1,8 +1,6 @@
 import numpy as np
-import pandas as pd
 from torch.utils.tensorboard import SummaryWriter
 from NEW_JobFlow import Pro_Flow,Job_Flow
-from copy import deepcopy
 
 class NEW_ENV:
     def __init__(self,pf:Pro_Flow,jf:Job_Flow,maxsteps,writer:SummaryWriter):
@@ -103,13 +101,13 @@ class NEW_ENV:
             self.D.append(D)
             D=(D-self.md)/self.sd
             reward=-D
-            self.writer.add_scalar('R',reward,self.global_step)
+            # self.writer.add_scalar('R',reward,self.global_step)
         else:
             D=np.max(self.pros(self.job,act)['o'])
             self.D.append(D)
             D=(D-self.md)/self.sd
             reward=-D
-            self.writer.add_scalar('test_time_delay',reward,self.global_step)
+            # self.writer.add_scalar('test_time_delay',reward,self.global_step)
         self.global_step+=1
         self.stepnum+=1
         if self.stepnum>=self.maxsteps:

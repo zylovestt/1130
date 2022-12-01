@@ -118,8 +118,8 @@ class TD3:
             if not self.clip_grad=='max':
                     nn_utils.clip_grad_norm_(self.critic2.parameters(),self.clip_grad)
             self.critic_optimizer2.step()
-            self.writer.add_scalar('critic_loss1',critic_loss1,self.c_epochs*self.num_update+i)
-            self.writer.add_scalar('critic_loss2',critic_loss2,self.c_epochs*self.num_update+i)
+            # self.writer.add_scalar('critic_loss1',critic_loss1,self.c_epochs*self.num_update+i)
+            # self.writer.add_scalar('critic_loss2',critic_loss2,self.c_epochs*self.num_update+i)
 
         if (self.num_update%self.update_cycles)==0:
             self.actor_optimizer.zero_grad()
@@ -141,9 +141,9 @@ class TD3:
             if not self.clip_grad=='max':
                     nn_utils.clip_grad_norm_(self.actor.parameters(),self.clip_grad)
             self.actor_optimizer.step()
-            self.writer.add_scalar('actor_loss',actor_loss,self.num_update//self.update_cycles)
-            self.writer.add_scalar('actor_norm',actor_norm,self.num_update//self.update_cycles)
-            self.writer.add_scalar('epo_loss',epo_loss,self.num_update//self.update_cycles)
+            # self.writer.add_scalar('actor_loss',actor_loss,self.num_update//self.update_cycles)
+            # self.writer.add_scalar('actor_norm',actor_norm,self.num_update//self.update_cycles)
+            # self.writer.add_scalar('epo_loss',epo_loss,self.num_update//self.update_cycles)
             self.update_all_targets()
 
     def update_all_targets(self):

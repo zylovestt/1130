@@ -1,28 +1,47 @@
 import torch
 import time
 from NEW_TD3 import TD3
-from NEW_PUBLIC_ENV import RandomAgent,Quick_ReplayBuffer,ReplayBuffer,NEW_ReplayBuffer,train_off_policy_agent,model_test,env,td3_anet,td3_qnet1,td3_qnet2,device,writer
+from NEW_PUBLIC_ENV import RandomAgent,Quick_ReplayBuffer,ReplayBuffer,NEW_ReplayBuffer,train_off_policy_agent,model_test,start_env
+from NEW_rl_utils import mp_train_off_policy_agent,mpp_train_off_policy_agent,mppp_train_off_policy_agent
+import torch.multiprocessing as mp
+import os
+import random
+import numpy as np
 
-print(device)
-start=time.time()
-aoptim=torch.optim.NAdam(td3_anet.parameters(),lr=1e-4,eps=1e-8) # lr=1e-4
-qoptim1=torch.optim.NAdam(td3_qnet1.parameters(),lr=1e-3,eps=1e-8) # lr=1e-4
-qoptim2=torch.optim.NAdam(td3_qnet2.parameters(),lr=1e-3,eps=1e-8) # lr=1e-4
+if __name__=='__main__':
+    random.seed(851)
+    np.random.seed(761)
+    torch.manual_seed(531)
+    torch.backends.cudnn.benchmark=True
+    mp.set_start_method('spawn')
+    os.environ['OMP_NUM_THREADS'] = "1"
+    env,anet,cnet,qnet,td3_anet,td3_qnet1,td3_qnet2,device,writer=start_env()
+    print(device)
+    
+    # print(sys.version_info)
+    # lock = threading.RLock()
+    # buffer = io.BytesIO()
+    # pickle.dump(lock, buffer)
 
-# aoptim=torch.optim.SGD(td3_anet.parameters(),lr=1e-4,momentum=0.9) # lr=1e-4
-# qoptim1=torch.optim.SGD(td3_qnet1.parameters(),lr=1e-3,momentum=0.9) # lr=1e-4
-# qoptim2=torch.optim.SGD(td3_qnet2.parameters(),lr=1e-3,momentum=0.9) # lr=1e-4
+    start=time.time()
+    aoptim=torch.optim.NAdam(td3_anet.parameters(),lr=1e-4,eps=1e-8) # lr=1e-4
+    qoptim1=torch.optim.NAdam(td3_qnet1.parameters(),lr=1e-3,eps=1e-8) # lr=1e-4
+    qoptim2=torch.optim.NAdam(td3_qnet2.parameters(),lr=1e-3,eps=1e-8) # lr=1e-4
 
-# anet,qnet1,qnet2,aoptim,qoptim1,qoptim2, tau, gamma, device,writer
-# 0.96,0.95,1e-1,1e-1,1e-3
-agent=TD3(td3_anet,td3_qnet1,td3_qnet2,aoptim,qoptim1,qoptim2,1e-2,0.95,device,writer,1e-1)
-replay_buffer = Quick_ReplayBuffer(100000,device)
-test_cycles=100
-test_epochs=50
-return_list = train_off_policy_agent(0,env, agent, 1000, replay_buffer, 10000,1024,10,test_cycles,test_epochs)
-ra=RandomAgent(9,env.pros.num,env.jf.tasknum)
-FTEST=lambda x:print(model_test(0,env,x,test_epochs))
-agent.explore=False
-FTEST(agent) 
-FTEST(ra)
-print('time:',time.time()-start)
+    # aoptim=torch.optim.SGD(td3_anet.parameters(),lr=1e-4,momentum=0.9) # lr=1e-4
+    # qoptim1=torch.optim.SGD(td3_qnet1.parameters(),lr=1e-3,momentum=0.9) # lr=1e-4
+    # qoptim2=torch.optim.SGD(td3_qnet2.parameters(),lr=1e-3,momentum=0.9) # lr=1e-4
+
+    # anet,qnet1,qnet2,aoptim,qoptim1,qoptim2, tau, gamma, device,writer
+    # 0.96,0.95,1e-1,1e-1,1e-3
+    agent=TD3(td3_anet,td3_qnet1,td3_qnet2,aoptim,qoptim1,qoptim2,1e-2,0.95,device,writer,1e-1)
+    replay_buffer = Quick_ReplayBuffer(100000,device)
+    test_cycles=100
+    test_epochs=50
+    return_list = mppp_train_off_policy_agent(0,env, agent, 1000, replay_buffer, 10000,1024,10,test_cycles,test_epochs)
+    ra=RandomAgent(9,env.pros.num,env.jf.tasknum)
+    FTEST=lambda x:print(model_test(0,env,x,test_epochs))
+    agent.explore=False
+    FTEST(agent) 
+    FTEST(ra)
+    print('time:',time.time()-start)
