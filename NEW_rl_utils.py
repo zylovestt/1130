@@ -2,7 +2,6 @@ import numpy as np
 import torch
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
-# from NEW_TEST import model_test
 from NEW_ENV2 import NEW_ENV
 from copy import deepcopy
 from NEW_TEST import model_test
