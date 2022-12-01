@@ -8,40 +8,29 @@ import os
 import random
 import numpy as np
 
+random.seed(851)
+np.random.seed(761)
+torch.manual_seed(531)
+
 if __name__=='__main__':
-    random.seed(851)
-    np.random.seed(761)
-    torch.manual_seed(531)
-    torch.backends.cudnn.benchmark=True
     mp.set_start_method('spawn')
     os.environ['OMP_NUM_THREADS'] = "1"
     env,anet,cnet,qnet,td3_anet,td3_qnet1,td3_qnet2,device,writer=start_env()
     print(device)
-    
-    # print(sys.version_info)
-    # lock = threading.RLock()
-    # buffer = io.BytesIO()
-    # pickle.dump(lock, buffer)
-
     start=time.time()
     aoptim=torch.optim.NAdam(td3_anet.parameters(),lr=1e-4,eps=1e-8) # lr=1e-4
-    qoptim1=torch.optim.NAdam(td3_qnet1.parameters(),lr=1e-3,eps=1e-8) # lr=1e-4
-    qoptim2=torch.optim.NAdam(td3_qnet2.parameters(),lr=1e-3,eps=1e-8) # lr=1e-4
-
-    # aoptim=torch.optim.SGD(td3_anet.parameters(),lr=1e-4,momentum=0.9) # lr=1e-4
-    # qoptim1=torch.optim.SGD(td3_qnet1.parameters(),lr=1e-3,momentum=0.9) # lr=1e-4
-    # qoptim2=torch.optim.SGD(td3_qnet2.parameters(),lr=1e-3,momentum=0.9) # lr=1e-4
+    qoptim1=torch.optim.NAdam(td3_qnet1.parameters(),lr=1e-3,eps=1e-8) # lr=1e-3
+    qoptim2=torch.optim.NAdam(td3_qnet2.parameters(),lr=1e-3,eps=1e-8) # lr=1e-3
 
     # anet,qnet1,qnet2,aoptim,qoptim1,qoptim2, tau, gamma, device,writer
-    # 0.96,0.95,1e-1,1e-1,1e-3
     agent=TD3(td3_anet,td3_qnet1,td3_qnet2,aoptim,qoptim1,qoptim2,1e-2,0.95,device,writer,1e-1)
     replay_buffer = Quick_ReplayBuffer(100000,device)
-    test_cycles=100
+    test_cycles=1000
     test_epochs=50
-    return_list = mppp_train_off_policy_agent(0,env, agent, 1000, replay_buffer, 10000,1024,10,test_cycles,test_epochs)
+    return_list=mppp_train_off_policy_agent(0,env,agent,20000,replay_buffer,10000,1024,10,test_cycles,test_epochs)
     ra=RandomAgent(9,env.pros.num,env.jf.tasknum)
     FTEST=lambda x:print(model_test(0,env,x,test_epochs))
     agent.explore=False
-    FTEST(agent) 
+    FTEST(agent)
     FTEST(ra)
     print('time:',time.time()-start)

@@ -49,7 +49,7 @@ def collect(env,agent,qin,qout):
         agent.actor.load_state_dict(model)
         steps=0
         l=[]
-        t_c=time.time()
+        # t_c=time.time()
         while steps<collect_num:
             if done is None or done:
                 state = env.reset()
@@ -62,8 +62,7 @@ def collect(env,agent,qin,qout):
                 state = next_state
                 steps+=1
         qout.put(l)
-        print('t_c',time.time()-t_c)
-                    
+        # print('t_c',time.time()-t_c)
 
 def train_on_policy_agent(test_seed,env:NEW_ENV,agent,num_episodes,cal_steps,writer:SummaryWriter,test_cycles,test_epochs):
     return_list = []
@@ -345,9 +344,9 @@ def mppp_train_off_policy_agent(test_seed,env, agent:NEW_TD3.TD3, num_episodes, 
                 assert replay_buffer.size >= minimal_size
                 b_s, b_a, b_r, b_ns, b_d, b_o = replay_buffer.sample(batch_size)
                 transition_dict = {'states': b_s, 'actions': b_a, 'next_states': b_ns, 'rewards': b_r, 'dones': b_d, 'overs': b_o}
-                t_cuda=time.time()
+                # t_cuda=time.time()
                 agent.update(transition_dict)
-                print('cuda',time.time()-t_cuda)
+                # print('cuda',time.time()-t_cuda)
                 
                 if (i_episode+1) % test_cycles == 0:
                     queue.put(deepcopy(agent.actor).to('cpu').state_dict())

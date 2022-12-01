@@ -57,11 +57,15 @@ class TD3:
         self.eps=0.0
         self.tem=1
         self.num_update=0
+        self.target_actor.requires_grad_(False)
+        self.target_critic1.requires_grad_(False)
+        self.target_critic2.requires_grad_(False)
     
     def take_action(self,state):
         # a=(self.actor(fstate(lambda x:torch.tensor(x,dtype=torch.float32).to(self.device),state)))
         F=lambda x:torch.tensor(np.array(x),dtype=torch.float32).to(self.device)
-        a=self.actor(F(state).unsqueeze(0))
+        with torch.no_grad():
+            a=self.actor(F(state).unsqueeze(0))
         if self.explore:
             a=gumbel_softmax(a,self.tem,self.eps)[0]
             # a=FU.gumbel_softmax(a,tau=self.tem,dim=-1,hard=True)
