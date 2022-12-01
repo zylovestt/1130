@@ -27,7 +27,7 @@ if __name__=='__main__':
     replay_buffer = Quick_ReplayBuffer(100000,device)
     test_cycles=1000
     test_epochs=50
-    return_list=mppp_train_off_policy_agent(0,env,agent,20000,replay_buffer,10000,1024,10,test_cycles,test_epochs)
+    return_list=mppp_train_off_policy_agent(0,env,agent,40000,replay_buffer,10000,1024,10,test_cycles,test_epochs)
     ra=RandomAgent(9,env.pros.num,env.jf.tasknum)
     FTEST=lambda x:print(model_test(0,env,x,test_epochs))
     agent.explore=False

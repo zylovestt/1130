@@ -67,8 +67,8 @@ class TD3:
         with torch.no_grad():
             a=self.actor(F(state).unsqueeze(0))
         if self.explore:
-            a=gumbel_softmax(a,self.tem,self.eps)[0]
-            # a=FU.gumbel_softmax(a,tau=self.tem,dim=-1,hard=True)
+            # a=gumbel_softmax(a,self.tem,self.eps)[0]
+            a=FU.gumbel_softmax(a,tau=self.tem,dim=-1,hard=True)[0]
 
             # b=torch.distributions.Categorical(logits=a[0]).sample().detach().cpu().numpy()
             # act=np.zeros(a.shape[1:],dtype='int32')
@@ -128,8 +128,8 @@ class TD3:
         if (self.num_update%self.update_cycles)==0:
             self.actor_optimizer.zero_grad()
             actor_out = self.actor(states)
-            act_vf_in = gumbel_softmax(actor_out,self.tem,self.eps)
-            # act_vf_in=FU.gumbel_softmax(actor_out,tau=self.tem,dim=-1,hard=True)
+            # act_vf_in = gumbel_softmax(actor_out,self.tem,self.eps)
+            act_vf_in=FU.gumbel_softmax(actor_out,tau=self.tem,dim=-1,hard=True)
             vf_in = torch.cat((states, act_vf_in.reshape(act_vf_in.shape[0],-1)), dim=1)
             # actor_loss = -torch.min(self.critic1(vf_in),self.critic2(vf_in)).mean() #ffffffffffffffff
             self.critic1.requires_grad_(False)
