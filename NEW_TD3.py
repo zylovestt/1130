@@ -15,7 +15,16 @@ from torch.utils.tensorboard import SummaryWriter
 def onehot_from_logits(logits, eps):
     ''' 生成最优动作的独热(one-hot)形式 '''
     logits+=torch.randn(size=logits.shape,device=logits.device)*0.1
-    return (logits == logits.max(-1, keepdim=True)[0]).float()
+    hhh=(logits == logits.max(-1, keepdim=True)[0]).float()
+    while not (hhh.sum(-1)<1.5).all():
+        logits+=torch.randn(size=logits.shape,device=logits.device)*0.1
+        hhh=(logits == logits.max(-1, keepdim=True)[0]).float()
+        print('same')
+        # index=hhh.sum(-1).reshape(-1).argmax()
+        # act_size=logits.shape[-2]*logits.shape[-1]
+        # u=logits[index//act_size,(index%act_size)//logits.shape[]]
+    assert (hhh.sum(-1)<1.001).all()
+    return hhh
     
 def sample_gumbel(shape, eps=1e-10, tens_type=torch.FloatTensor):
     """从Gumbel(0,1)分布中采样"""

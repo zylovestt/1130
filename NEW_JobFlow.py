@@ -38,6 +38,9 @@ class PROS:
     
     def __call__(self,job:JOB,act):
         self.global_step+=1
+        if not (np.sum(act,-1)==job.tasks_col['k']).all():
+            print(act)
+            print(job.tasks_col['k'])
         assert (np.sum(act,-1)==job.tasks_col['k']).all()
         assert ((~(np.sum(act,0)>0))+[p['k'] for p in self.ps]).all()
         d_l={'o':[],'t':[]}
@@ -165,16 +168,18 @@ class Job_Flow:
         self.r=rng.normal(*job_config['r'],size)
         # self.r=rng.uniform(*job_config['r'],size)
         assert (self.r>=0).all()
-        loc_mean=rng.uniform(*job_config['loc_mean'],max_length)
+        loc_mean=rng.uniform(*job_config['loc_mean'],size=(max_length,2))
         scale=job_config['loc_scale']
-        loc_XY=np.empty((max_length,2*tasknum))
-        for x,loc in zip(loc_XY,loc_mean):
-            x[:]=rng.normal(loc,scale,2*tasknum)
-        self.loc_X=loc_XY[:,:tasknum]
-        self.loc_Y=loc_XY[:,tasknum:]
+        # loc_XY=np.empty((max_length,2*tasknum))
+        # for x,loc in zip(loc_XY,loc_mean):
+        #     x[:]=rng.normal(loc,scale,2*tasknum)
+        # self.loc_X=loc_XY[:,:tasknum]
+        # self.loc_Y=loc_XY[:,tasknum:]
+        self.loc_X=loc_mean[:,0:1]+rng.normal(scale=scale,size=(max_length,tasknum))
+        self.loc_Y=loc_mean[:,1:]+rng.normal(scale=scale,size=(max_length,tasknum))
         # self.job_time_break=np.array([rng.exponential(x) for x in job_config['time']*max_length])
-        self.job_time_break=rng.normal(*job_config['time'],max_length)
-        # self.job_time_break=rng.exponential(job_config['time'][0],max_length)
+        # self.job_time_break=rng.normal(*job_config['time'],max_length)
+        self.job_time_break=rng.exponential(job_config['time'][0],max_length)
         self.step=0
         self.time=0
     
@@ -206,7 +211,11 @@ if __name__=='__main__':
     jc={'k':0.8,'r':(100,10),'loc_mean':(0,10),'loc_scale':3,'time':[1]}
     jf=Job_Flow(0,jc,3,10)
     jf.reset()
-    jf.cal_mean_scale(1000)
-    print(jf.mean,jf.scale)
+    # jf.cal_mean_scale(1000)
+    # print(jf.mean,jf.scale)
     for _ in range(10):
-        print(next(jf))
+        next(jf)
+    print(jf.loc_X)
+    print(jf.loc_Y)
+    print(jf.r)
+    print(jf.k_num)

@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import math
 
 # FMakeNet=lambda x,y,z:[nn.PReLU() if not i%2 else nn.Linear(x,x) if i<y*2-1 else nn.Linear(x,z) for i in range(y*2)]
 
@@ -31,6 +32,33 @@ class CriticNet(nn.Module):
     # def _init_weights(self, m):
     #     nn.init.kaiming_normal_(m.weight)
 
+    # def _init_weights(self, m):
+    #     if isinstance(m, nn.Linear):
+    #         nn.init.normal_(m.weight, std=.02)
+    #         if isinstance(m, nn.Linear) and m.bias is not None:
+    #             nn.init.constant_(m.bias, 0)
+    #     elif isinstance(m, nn.LayerNorm):
+    #         nn.init.constant_(m.bias, 0)
+    #         nn.init.constant_(m.weight, 1.0)
+    #     elif isinstance(m, nn.Conv2d):
+    #         fan_out = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+    #         fan_out //= m.groups
+    #         m.weight.data.normal_(0, math.sqrt(2.0 / fan_out))
+    #         if m.bias is not None:
+    #             m.bias.data.zero_()
+    
+    # def _init_weights(self, m):
+    #     if isinstance(m, nn.Linear):
+    #         nn.init.xavier_normal_(m.weight)
+    #         nn.init.constant_(m.bias, 0)
+    #     # 也可以判断是否为conv2d，使用相应的初始化方式 
+    #     elif isinstance(m, nn.Conv2d):
+    #         nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+    #     # 是否为批归一化层
+    #     elif isinstance(m, nn.BatchNorm2d):
+    #         nn.init.constant_(m.weight, 1)
+    #         nn.init.constant_(m.bias, 0)
+
 class QNet(nn.Module):
     def __init__(self,input_size,base_deep,base_width,top_deep,top_width,output_size,outnet_num):
         super().__init__()
@@ -61,6 +89,33 @@ class QNet(nn.Module):
     # def _init_weights(self, m):
     #     nn.init.kaiming_normal_(m.weight)
 
+    # def _init_weights(self, m):
+    #     if isinstance(m, nn.Linear):
+    #         nn.init.normal_(m.weight, std=.02)
+    #         if isinstance(m, nn.Linear) and m.bias is not None:
+    #             nn.init.constant_(m.bias, 0)
+    #     elif isinstance(m, nn.LayerNorm):
+    #         nn.init.constant_(m.bias, 0)
+    #         nn.init.constant_(m.weight, 1.0)
+    #     elif isinstance(m, nn.Conv2d):
+    #         fan_out = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+    #         fan_out //= m.groups
+    #         m.weight.data.normal_(0, math.sqrt(2.0 / fan_out))
+    #         if m.bias is not None:
+    #             m.bias.data.zero_()
+    
+    # def _init_weights(self, m):
+    #     if isinstance(m, nn.Linear):
+    #         nn.init.xavier_normal_(m.weight)
+    #         nn.init.constant_(m.bias, 0)
+    #     # 也可以判断是否为conv2d，使用相应的初始化方式 
+    #     elif isinstance(m, nn.Conv2d):
+    #         nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+    #     # 是否为批归一化层
+    #     elif isinstance(m, nn.BatchNorm2d):
+    #         nn.init.constant_(m.weight, 1)
+    #         nn.init.constant_(m.bias, 0)
+
 class QNet2(nn.Module):
     def __init__(self,input_size,deep,width,pro_num,task_num):
         super().__init__()
@@ -78,3 +133,31 @@ class QNet2(nn.Module):
     
     # def _init_weights(self, m):
     #     nn.init.kaiming_normal_(m.weight)
+
+    # def weight_init(self,m):
+    #     if isinstance(m, nn.Linear):
+    #         nn.init.xavier_normal_(m.weight)
+    #         nn.init.constant_(m.bias, 0)
+    #     # 也可以判断是否为conv2d，使用相应的初始化方式 
+    #     elif isinstance(m, nn.Conv2d):
+    #         nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+    #     # 是否为批归一化层
+    #     elif isinstance(m, nn.BatchNorm2d):
+    #         nn.init.constant_(m.weight, 1)
+    #         nn.init.constant_(m.bias, 0)
+
+
+    # def _init_weights(self, m):
+    #     if isinstance(m, nn.Linear):
+    #         nn.init.normal_(m.weight, std=.02)
+    #         if isinstance(m, nn.Linear) and m.bias is not None:
+    #             nn.init.constant_(m.bias, 0)
+    #     elif isinstance(m, nn.LayerNorm):
+    #         nn.init.constant_(m.bias, 0)
+    #         nn.init.constant_(m.weight, 1.0)
+    #     elif isinstance(m, nn.Conv2d):
+    #         fan_out = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+    #         fan_out //= m.groups
+    #         m.weight.data.normal_(0, math.sqrt(2.0 / fan_out))
+    #         if m.bias is not None:
+    #             m.bias.data.zero_()

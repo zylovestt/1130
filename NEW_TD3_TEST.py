@@ -33,4 +33,5 @@ if __name__=='__main__':
     agent.explore=False
     print('agent:',FTEST(agent))
     print('random:',FTEST(ra))
+    model_test(0,env,agent,1,True)
     print('time:',time.time()-start)
