@@ -14,7 +14,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 def onehot_from_logits(logits, eps):
     ''' 生成最优动作的独热(one-hot)形式 '''
-    logits+=torch.randn(size=logits.shape,device=logits.device)
+    logits+=torch.randn(size=logits.shape,device=logits.device)*0.1
     return (logits == logits.max(-1, keepdim=True)[0]).float()
     
 def sample_gumbel(shape, eps=1e-10, tens_type=torch.FloatTensor):

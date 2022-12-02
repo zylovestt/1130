@@ -134,72 +134,22 @@ class RandomAgent:
         act[range(self.tn),r]=1
         return act
 
-# if __name__=='__main__':
-#     writer=SummaryWriter(comment='NEW_ENV')
-#     print('test1')
-#     fq=lambda s:lambda rng,x:rng.uniform(*s,x)
-#     p=pd.DataFrame([[1,1,1,np.array([0,0]),(1,3)],
-#                     [11,1,11,np.array([1,0]),(6,7)],
-#                     [100,10,120,np.array([0,2]),(5,6)]],columns=['c','r','v','loc','q'],index=['P1','P2','P3'])
-#     for i,_ in p.iterrows():
-#         p.at[i,'q']=fq(p.loc[i,'q'])
-#     p=PROS(0,p,writer)
-#     # p.ps['alpha']=[1,4,2]
-#     # p.ps['beta']=[2,1,3]
-#     # p.time=3
-#     t=pd.DataFrame([[10,20,1],
-#                     [20,10,1],],columns=['c','r','k'])
-#     t=JOB(t,np.array([3,0]),5,np.array([[2,2],[0,0],[0,0]]))
-#     # print(p(t))
-#     # print(p(t))
-
-#     print('test2')
-#     pronum=3
-#     m=pd.DataFrame([[(1,10),(2,20),(1,4)],
-#                     [(1,10),(2,20),(1,4)]],columns=['c','r','k'],index=['T1','T2'])
-#     d={'time':(1,5),
-#        'loc':(1,20,2),
-#        'task':m}
-#     jp=Job_Flow(10,d,pronum)
-#     i=0
-#     for j in jp:
-#         #print(j.tasks)
-#         i+=1
-#         if i==1:
-#             break
-    
-#     print('test3')
-#     env=NEW_ENV(p,jp,1,1,0,50,writer)
-#     print(env.reset())
-
-#     print('test4')
-#     env.normalize(10)
-#     # print('nor over')
-#     print(env.mq,env.sq,env.md,env.sd)
-#     ra=RandomAgent(0,pronum,env.jf.tasknum)
-#     from NEW_NET import ActNet,CriticNet
-#     import torch
-#     torch.manual_seed(2)
-#     state=env.reset()
-#     anet=ActNet(3,100,3,100,state.size,env.pros.num,env.jf.tasknum)
-#     print(anet(torch.tensor(np.concatenate([state,state],0))))
-#     cnet=CriticNet(3,100,state.size)
-#     print(cnet(torch.tensor(np.concatenate([state,state],0))))
-
-#     print('test5')
-#     from NEW_AC import AC
-#     aoptim=torch.optim.NAdam(anet.parameters(),lr=1e-4,eps=1e-8)
-#     coptim=torch.optim.NAdam(cnet.parameters(),lr=1e-2,eps=1e-8)
-#     # gamma,labda,act_clip_grad,cri_clip_grad,beta,anet,cnet,aoptim,coptim,device
-#     agent=AC(0.98,0.95,'max','max',1e-4,anet,cnet,aoptim,coptim,'cpu')
-#     print(agent.take_action(state))
-
-#     print('test6')
-#     import NEW_rl_utils
-#     NEW_rl_utils.train_on_policy_agent(9,env, agent, 1000,10)
-
-#     from NEW_TEST import model_test
-#     ra=RandomAgent(9,pronum,env.jf.tasknum)
-#     FTEST=lambda x:print(model_test(0,env,x,20))
-#     FTEST(agent)
-#     FTEST(ra)
+if __name__=='__main__':
+    device='cuda'
+    writer=None
+    pro_config={'c':(1,0),'r':(1,0),'v':(1,0)}
+    pro_num=2
+    pro_config['num_pro']=1
+    PF=Pro_Flow(1,0,pro_config,pro_num,writer,True)
+    jc={'k':1,'r':(1,0),'loc_mean':(1,1),'loc_scale':0,'time':(1,0)}
+    tasknum=2
+    env_steps=10
+    JF=Job_Flow(0,jc,tasknum,env_steps)
+    env=NEW_ENV(PF,JF,env_steps,writer)
+    state=env.reset()
+    act=np.array([[1,0],[0,1]])
+    print(env.step(act))
+    print(env.pros.ps)
+    act=np.array([[1,0],[1,0]])
+    print(env.step(act))
+    print(env.pros.ps)

@@ -38,10 +38,7 @@ class PROS:
     
     def __call__(self,job:JOB,act):
         self.global_step+=1
-        if not (np.sum(act,-1)==job.tasks_col['k']).all():
-            print(act)
-            print(job.tasks_col['k'])
-            assert (np.sum(act,-1)==job.tasks_col['k']).all()
+        assert (np.sum(act,-1)==job.tasks_col['k']).all()
         assert ((~(np.sum(act,0)>0))+[p['k'] for p in self.ps]).all()
         d_l={'o':[],'t':[]}
         timepass=job.time-self.time
@@ -176,8 +173,8 @@ class Job_Flow:
         self.loc_X=loc_XY[:,:tasknum]
         self.loc_Y=loc_XY[:,tasknum:]
         # self.job_time_break=np.array([rng.exponential(x) for x in job_config['time']*max_length])
-        # self.job_time_break=rng.normal(*job_config['time'],max_length)
-        self.job_time_break=rng.exponential(job_config['time'][0],max_length)
+        self.job_time_break=rng.normal(*job_config['time'],max_length)
+        # self.job_time_break=rng.exponential(job_config['time'][0],max_length)
         self.step=0
         self.time=0
     
