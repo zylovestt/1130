@@ -34,25 +34,24 @@ def start_env():
     env.md=np.load('md.npy')
     env.sd=np.load('sd.npy')
     print('md',env.md,'sd',env.sd)
-    state=env.reset()
 
-    # anet=QNet(state.size,1,500,2,500,env.pros.num,env.jf.tasknum).to(device)
-    # cnet=CriticNet(state.size,3,500).to(device)
-    # qnet=QNet(state.size,1,300,1,100,env.pros.num,env.jf.tasknum).to(device)
+    # anet=QNet(env.state_size,1,500,2,500,env.pros.num,env.jf.tasknum).to(device)
+    # cnet=CriticNet(env.state_size,3,500).to(device)
+    # qnet=QNet(env.state_size,1,300,1,100,env.pros.num,env.jf.tasknum).to(device)
 
-    # td3_anet=QNet(state.size,1,500,2,500,env.pros.num,env.jf.tasknum).to(device)
-    # td3_qnet1=CriticNet(state.size+env.pros.num*env.jf.tasknum,3,500).to(device)
-    # td3_qnet2=CriticNet(state.size+env.pros.num*env.jf.tasknum,3,500).to(device)
-
+    # td3_anet=QNet(env.state_size,1,500,2,500,env.pros.num,env.jf.tasknum).to(device)
+    # td3_qnet1=CriticNet(env.state_size+env.pros.num*env.jf.tasknum,3,500).to(device)
+    # td3_qnet2=CriticNet(env.state_size+env.pros.num*env.jf.tasknum,3,500).to(device)
 
 
-    anet=QNet2(state.size,3,500,env.pros.num,env.jf.tasknum).to(device)
-    cnet=CriticNet(state.size,3,500).to(device)
-    qnet=QNet2(state.size,3,500,env.pros.num,env.jf.tasknum).to(device)
 
-    td3_anet=QNet2(state.size,3,500,env.pros.num,env.jf.tasknum).to(device)
-    td3_qnet1=CriticNet(state.size+env.pros.num*env.jf.tasknum,3,500).to(device)
-    td3_qnet2=CriticNet(state.size+env.pros.num*env.jf.tasknum,3,500).to(device)
+    anet=QNet2(env.state_size,3,500,env.pros.num,env.jf.tasknum).to(device)
+    cnet=CriticNet(env.state_size,3,500).to(device)
+    qnet=QNet2(env.state_size,3,500,env.pros.num,env.jf.tasknum).to(device)
+
+    td3_anet=QNet2(env.state_size,3,500,env.pros.num,env.jf.tasknum).to(device)
+    td3_qnet1=CriticNet(env.state_size+env.action_size,3,500).to(device)
+    td3_qnet2=CriticNet(env.state_size+env.action_size,3,500).to(device)
 
     print(anet)
     print(cnet)

@@ -14,6 +14,7 @@ class NEW_ENV:
         self.D=[]
         self.job_list=[]
         state=self.reset()
+        self.action_size=pf.num*jf.tasknum
         self.state_size=state.size
         self.train=True
     

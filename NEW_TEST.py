@@ -17,5 +17,5 @@ def model_test(seed,env,agent,num_episodes):
             episode_return += reward
         return_list.append(episode_return)
     env.set_train_mode()
-    print(np.mean(return_list))
+    # print(np.mean(return_list))
     return np.mean(return_list)

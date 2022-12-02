@@ -15,8 +15,8 @@ def mpp_model_test(seed,env,agent:NEW_TD3.TD3,num_episodes,queue:mp.Queue):
     agent.explore=False
     while True:
         model=queue.get()
-        if model is None:
-            break
+        # if model is None:
+        #     break
         agent.actor.load_state_dict(model)
         agent.rng=np.random.RandomState(seed)
         env.set_test_mode(seed)
@@ -42,12 +42,12 @@ def collect(env,agent,qin,qout):
     done=None
     while True:
         s=qin.get()
-        if s is None:
-            break
+        # if s is None:
+        #     break
         model,collect_num=s
         agent.actor.load_state_dict(model)
         steps=0
-        l=[]
+        l=[None]*collect_num
         # t_c=time.time()
         while steps<collect_num:
             if done is None or done:
@@ -57,7 +57,7 @@ def collect(env,agent,qin,qout):
                 with torch.no_grad():
                     action = agent.take_action(state)
                 next_state,reward,done,over = env.step(action)
-                l.append((state, action, reward, next_state, done, over))
+                l[steps]=(state, action.reshape(-1), reward, next_state, done, over)
                 state = next_state
                 steps+=1
         qout.put(l)
@@ -129,10 +129,17 @@ class ReplayBuffer:
         return len(self.buffer)
 
 class Quick_ReplayBuffer:
-    def __init__(self,capacity,device):
+    def __init__(self,capacity,device,state_size=None,action_size=None):
         self.capacity=capacity
         self.device=device
-        self.buffer=None
+        if state_size is None:
+            self.buffer=None
+        else:
+            self.state_size=state_size
+            self.action_size=action_size
+            self.buffer=torch.empty((self.capacity,2*self.state_size+self.action_size+3),device=self.device)
+            self.size=0
+            self.p=0
     
     def add(self, state, action, reward, next_state, done, over):
         action=action.reshape(-1)
@@ -142,11 +149,18 @@ class Quick_ReplayBuffer:
             self.buffer=torch.empty((self.capacity,2*self.state_size+self.action_size+3),device=self.device)
             self.size=0
             self.p=0
-        self.buffer[self.p]=torch.tensor(np.hstack([state,action,[reward],next_state,[done,over]]),device=self.device)
+        self.buffer[self.p]=torch.tensor(np.hstack([state,action,reward,next_state,done,over]),device=self.device)
         if self.size<self.capacity:
             self.size+=1
         self.p=(self.p+1)%self.capacity
     
+    def add_batch(self,bx):
+        bz=len(bx)
+        self.buffer[self.p:self.p+bz]=torch.tensor(np.array([np.hstack(u) for u in bx]),device=self.device)
+        if self.size<self.capacity:
+            self.size+=bz
+        self.p=(self.p+bz)%self.capacity
+
     def sample(self,batch_size):
         s=self.buffer[np.random.choice(range(self.size),batch_size)]
         sz=self.state_size
@@ -171,7 +185,7 @@ class NEW_ReplayBuffer:
             self.state_size=len(state)
             self.action_size=len(action)
             self.flag=0
-        self.buffer.append(torch.tensor(np.hstack([state,action,[reward],next_state,[done,over]]),device=self.device).float())
+        self.buffer.append(torch.tensor(np.hstack([state,action,reward,next_state,done,over]),device=self.device).float())
     
     def sample(self,batch_size):
         s=torch.vstack(random.sample(self.buffer, batch_size))
@@ -313,7 +327,9 @@ def mpp_train_off_policy_agent(test_seed,env, agent:NEW_TD3.TD3, num_episodes, r
                     pbar.set_postfix({'episode': '%d' % (num_episodes/10 * i + i_episode+1),
                                       'return': '%.3f' % np.mean(return_list[-10:])})
                 pbar.update(1)
-    queue.put(None)
+    # queue.put(None)
+    data_proc.terminate()
+    data_proc.join()
     return return_list
 
 def mppp_train_off_policy_agent(test_seed,env, agent:NEW_TD3.TD3, num_episodes, replay_buffer, minimal_size, batch_size,update_num,test_cycles,test_epochs):
@@ -324,8 +340,8 @@ def mppp_train_off_policy_agent(test_seed,env, agent:NEW_TD3.TD3, num_episodes, 
     agent_mp.critic1=agent_mp.critic2=agent_mp.target_critic1=agent_mp.target_critic2=agent_mp.target_actor=None
     agent_mp.actor_optimizer=agent_mp.critic_optimizer1=agent_mp.critic_optimizer2=None
     queue=mp.Queue()
-    data_proc = mp.Process(target=mpp_model_test,args=(test_seed,env,agent_mp,test_epochs,queue))
-    data_proc.start()
+    test_proc = mp.Process(target=mpp_model_test,args=(test_seed,env,agent_mp,test_epochs,queue))
+    test_proc.start()
 
     collect_queue_in=mp.Queue()
     collect_queue_out=mp.Queue()
@@ -338,8 +354,9 @@ def mppp_train_off_policy_agent(test_seed,env, agent:NEW_TD3.TD3, num_episodes, 
             for i_episode in range(int(num_episodes/10)):
                 collect_queue_in.put((deepcopy(agent.actor).to('cpu').state_dict(),update_num))
                 collect_sample=collect_queue_out.get()
-                for cs in collect_sample:
-                    replay_buffer.add(*cs)
+                # for cs in collect_sample:
+                #     replay_buffer.add(*cs)
+                replay_buffer.add_batch(collect_sample)
                 assert replay_buffer.size >= minimal_size
                 b_s, b_a, b_r, b_ns, b_d, b_o = replay_buffer.sample(batch_size)
                 transition_dict = {'states': b_s, 'actions': b_a, 'next_states': b_ns, 'rewards': b_r, 'dones': b_d, 'overs': b_o}
@@ -347,12 +364,16 @@ def mppp_train_off_policy_agent(test_seed,env, agent:NEW_TD3.TD3, num_episodes, 
                 agent.update(transition_dict)
                 # print('cuda',time.time()-t_cuda)
                 
-                if (i_episode+1) % test_cycles == 0:
+                if (i*int(num_episodes/10)+i_episode+1) % test_cycles == 0:
                     queue.put(deepcopy(agent.actor).to('cpu').state_dict())
                     pbar.set_postfix({'episode': '%d' % (num_episodes/10 * i + i_episode+1)})
                 pbar.update(1)
-    queue.put(None)
-    collect_queue_in.put(None)
+    # queue.put(None)
+    # collect_queue_in.put(None)
+    test_proc.terminate()
+    test_proc.join()
+    collect_proc.terminate()
+    test_proc.join()
 
 def compute_advantage_batch(gamma, lmbda, td_delta,dones):
     td_delta = td_delta.detach().numpy()
