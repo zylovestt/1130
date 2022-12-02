@@ -38,7 +38,10 @@ class PROS:
     
     def __call__(self,job:JOB,act):
         self.global_step+=1
-        assert (np.sum(act,-1)==job.tasks_col['k']).all()
+        if not (np.sum(act,-1)==job.tasks_col['k']).all():
+            print(act)
+            print(job.tasks_col['k'])
+            assert (np.sum(act,-1)==job.tasks_col['k']).all()
         assert ((~(np.sum(act,0)>0))+[p['k'] for p in self.ps]).all()
         d_l={'o':[],'t':[]}
         timepass=job.time-self.time
