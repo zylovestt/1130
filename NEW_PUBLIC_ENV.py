@@ -26,7 +26,7 @@ def start_env():
     # writer=SummaryWriter(comment='NEW_ENV')
     writer=None
     # pro_config={'c':(10,2),'r':(50,10),'v':(10,2)}
-    pro_config={'c':(1,0.2),'r':(5,1),'v':(0.1,0.01)}
+    pro_config={'c':(1,0.15),'r':(5,0.75),'v':(0.1,0.015)}
     # pro_config={'c':(2,20),'r':(10,100),'v':(5,20)}
     pro_num=8
     pro_config['num_pro']=0.9
@@ -42,7 +42,7 @@ def start_env():
     # JF.cal_mean_scale(1000)
     env=NEW_ENV(PF,JF,env_steps,writer)
     # print(env.pf.pros.ps)
-    # env.normalize(10000)
+    # env.normalize(1000)
     # np.save('md_li',env.md)
     # np.save('sd_li',env.sd)
     env.md=np.load('md_li.npy')

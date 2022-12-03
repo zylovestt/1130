@@ -56,7 +56,9 @@ class NEW_ENV:
         pros,job=self.pros,self.job
         # s_pro=pros.ps[['k','c','r','v','alpha','beta','lx','ly'] if self.pf.change else ['k','alpha','beta','lx','ly']].values
         # s_pro=pros.ps[['k','c','r','v','alpha','beta','lx','ly']].values
+        # s_pro=np.array([list(t.values() if t=='k' else t.values()/100) for t in pros.ps])
         s_pro=np.array([list(t.values()) for t in pros.ps])
+        # s_pro[:,1:]/=10
         s_job=np.array([[self.stepnum,self.jf.delta_time]])
         # s_job=np.array([[self.jf.delta_time]])
         # s_job=np.array([[job.time]])
@@ -65,7 +67,10 @@ class NEW_ENV:
         # jt[ind]=(jt[ind]-np.array([[self.jf.mean[key] for key in ind]]))/np.array([[self.jf.scale[key] for key in ind]])
         # s_task=np.concatenate([s_job,jt.values.T.reshape(1,-1)],axis=1)
         # s_task=np.concatenate([s_job,job.tasks.values.T.reshape(1,-1)],axis=1)
+
         s_task=np.array(list(job.tasks_col.values()))
+        # s_task[1:]/=100
+        # s_task=np.array([list(t.values() if t=='k' else t.values()/100) for t in job.tasks])
         result=np.concatenate([s_pro.T.reshape(1,-1),s_job,s_task.reshape(1,-1)],axis=1).astype(np.float32)
         if maddpg:
             return [result.reshape(-1)]*self.jf.tasknum

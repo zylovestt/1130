@@ -14,10 +14,10 @@ from torch.utils.tensorboard import SummaryWriter
 
 def onehot_from_logits(logits, eps):
     ''' 生成最优动作的独热(one-hot)形式 '''
-    logits+=torch.randn(size=logits.shape,device=logits.device)*0.1
+    logits+=torch.randn(size=logits.shape,device=logits.device)*1e-1
     hhh=(logits == logits.max(-1, keepdim=True)[0]).float()
     while not (hhh.sum(-1)<1.5).all():
-        logits+=torch.randn(size=logits.shape,device=logits.device)*0.1
+        logits+=torch.randn(size=logits.shape,device=logits.device)*1e-1
         hhh=(logits == logits.max(-1, keepdim=True)[0]).float()
         print('same')
         # index=hhh.sum(-1).reshape(-1).argmax()

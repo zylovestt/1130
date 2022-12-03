@@ -121,9 +121,10 @@ class Pro_Flow:
             num_pro=self.rng.binomial(n-1,self.pro_config['num_pro'])+1
             s=slice(0,num_pro,None)
             p['k'][s]=[1]*num_pro
-            p['c'][s]=RF('c',num_pro).tolist()
-            p['r'][s]=RF('r',num_pro).tolist()
-            p['v'][s]=RF('v',num_pro).tolist()
+            p['c'][s]=RF('c',num_pro)
+            p['r'][s]=RF('r',num_pro)
+            p['v'][s]=RF('v',num_pro)
+            assert (np.array(p['c'][s])>0).all() and (np.array(p['r'][s])>0).all() and (np.array(p['v'][s])>0).all()
             # p['lx'][s]=[0.0]*num_pro
             # p['ly'][s]=[0.0]*num_pro
             p=[{k:p[k][i] for k in p} for i in range(n)]
