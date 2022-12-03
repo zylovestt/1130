@@ -27,7 +27,7 @@ def model_test(seed,env,agent,num_episodes,plot=False):
     env.set_train_mode()
     if plot:
         task_loc=np.array(task_loc)
-        pro_index=np.array(pro_index) 
+        pro_index=np.array(pro_index)
         fig=plt.figure()
         for i in range(len(action)):
             tl=task_loc[pro_index==i]
