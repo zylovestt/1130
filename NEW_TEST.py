@@ -32,7 +32,7 @@ def model_test(seed,env,agent,num_episodes,plot=False):
         for i in range(len(action)):
             tl=task_loc[pro_index==i]
             if len(tl):
-                plt.plot(tl[:,0],tl[:,1],label=str(i))
+                plt.scatter(tl[:,0],tl[:,1],label=str(i))
         plt.legend()
         fig.savefig('trace')
     return np.mean(return_list)
