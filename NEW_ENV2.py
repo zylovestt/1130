@@ -14,6 +14,7 @@ class NEW_ENV:
         self.D=[]
         self.job_list=[]
         state=self.reset()
+        print(state)
         self.action_size=pf.num*jf.tasknum
         self.state_size=state.size
         self.train=True
@@ -59,8 +60,10 @@ class NEW_ENV:
         # s_pro=np.array([list(t.values() if t=='k' else t.values()/100) for t in pros.ps])
         s_pro=np.array([list(t.values()) for t in pros.ps])
         # s_pro[:,1:]/=10
-        s_job=np.array([[self.stepnum,self.jf.delta_time]])
-        # s_job=np.array([[self.jf.delta_time]])
+        s_pro[:,-2:]/=100
+        # s_job=np.array([[self.stepnum,self.jf.delta_time]])
+        s_job=np.array([[self.jf.delta_time]])
+
         # s_job=np.array([[job.time]])
         # jt=deepcopy(job.tasks)
         # ind=['r','lx','ly']

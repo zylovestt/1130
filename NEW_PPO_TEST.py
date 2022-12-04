@@ -16,8 +16,8 @@ agent=PPO(0.2,5,0.95,0.95,1e-1,1e-1,0.5*1e-3,anet,cnet,aoptim,coptim,device,writ
 # FTEST(agent)
 # FTEST(ra)
 
-test_epochs=50
-train_on_policy_agent(0,env, agent, 1000,5,writer,100,test_epochs)
+test_epochs=500
+train_on_policy_agent(0,env, agent, 10000,5,writer,200,test_epochs)
 ra=RandomAgent(9,env.pros.num,env.jf.tasknum)
 FTEST=lambda x:print(model_test(0,env,x,test_epochs))
 agent.explore=False

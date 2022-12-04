@@ -29,11 +29,11 @@ class PROS:
         self.rng=np.random.RandomState(seed)
 
     def reset(self):
-        for p in self.ps:
-            p['alpha']=0.0
-            p['beta']=0.0
-            p['lx']=0.0
-            p['ly']=0.0
+        # for p in self.ps:
+        #     p['alpha']=0.0
+        #     p['beta']=0.0
+        #     p['lx']=0.0
+        #     p['ly']=0.0
         self.time=0.0
     
     def __call__(self,job:JOB,act):
@@ -112,7 +112,7 @@ class Pro_Flow:
         if self.change or self.pros is None:
             rng=self.rng
             n=self.num
-            columns=['k','c','r','v','lx','ly'] #k必须放在第一位
+            columns=['k','c','r','v','lx','ly','alpha','beta'] #k必须放在第一位
             p={key:[0]*n for key in columns}
             # p=pd.DataFrame(np.zeros((self.num,len(columns))),columns=columns)
             RF=lambda x,y:rng.normal(*self.pro_config[x],y)
@@ -121,9 +121,15 @@ class Pro_Flow:
             num_pro=self.rng.binomial(n-1,self.pro_config['num_pro'])+1
             s=slice(0,num_pro,None)
             p['k'][s]=[1]*num_pro
-            p['c'][s]=RF('c',num_pro)
-            p['r'][s]=RF('r',num_pro)
-            p['v'][s]=RF('v',num_pro)
+            # p['c'][s]=RF('c',num_pro)
+            # p['r'][s]=RF('r',num_pro)
+            # p['v'][s]=RF('v',num_pro)
+            for e in ['c','r','v']:
+                p[e][s]=RF(e,num_pro)
+            RFU=lambda x,y:rng.uniform(*self.pro_config[x],y)
+            for e in ['lx','ly','alpha','beta']:
+                p[e][s]=RFU(e,num_pro)
+            p['beta'][s]=[alpha+beta for alpha,beta in zip(p['alpha'][s],p['beta'][s])]
             assert (np.array(p['c'][s])>0).all() and (np.array(p['r'][s])>0).all() and (np.array(p['v'][s])>0).all()
             # p['lx'][s]=[0.0]*num_pro
             # p['ly'][s]=[0.0]*num_pro
