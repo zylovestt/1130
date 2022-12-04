@@ -23,13 +23,13 @@ def weight_init(m):
 
 def start_env():
     device='cuda'
-    writer=SummaryWriter(comment='NEW_ENV')
-    # writer=None
+    # writer=SummaryWriter(comment='NEW_ENV')
+    writer=None
     # pro_config={'c':(10,2),'r':(50,10),'v':(10,2)}
     pro_config={'c':(1,0.15),'r':(5,0.75),'v':(0.1,0.015),'lx':(-1,1),'ly':(-1,1),'alpha':(0,300),'beta':(0,50)}
     # pro_config={'c':(2,20),'r':(10,100),'v':(5,20)}
     pro_num=8
-    pro_config['num_pro']=0.9
+    pro_config['num_pro']=0.5
     # pro_config['num_pro']=np.ones(pro_num)/pro_num
     # pro_config['num_pro']=[0,0,0,0,1]
     PF=Pro_Flow(1,0,pro_config,pro_num,writer,True)
@@ -44,10 +44,10 @@ def start_env():
     print(env.pf.pros.ps)
 
     # env.normalize(1000)
-    # np.save('md_li_ab',env.md)
-    # np.save('sd_li_ab',env.sd)
-    env.md=np.load('md_li_ab.npy')
-    env.sd=np.load('sd_li_ab.npy')
+    # np.save('md_li_ab0.5',env.md)
+    # np.save('sd_li_ab0.5',env.sd)
+    env.md=np.load('md_li_ab0.5.npy')
+    env.sd=np.load('sd_li_ab0.5.npy')
     print('md',env.md,'sd',env.sd)
 
     # anet=QNet(env.state_size,1,500,2,500,env.pros.num,env.jf.tasknum).to(device)
