@@ -21,8 +21,8 @@ def weight_init(m):
         nn.init.constant_(m.weight, 1)
         nn.init.constant_(m.bias, 0)
 
-def start_env():
-    device='cuda'
+def start_env(device):
+    device=device
     # writer=SummaryWriter(comment='NEW_ENV')
     writer=None
     # pro_config={'c':(10,2),'r':(50,10),'v':(10,2)}

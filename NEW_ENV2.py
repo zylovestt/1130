@@ -60,9 +60,10 @@ class NEW_ENV:
         # s_pro=np.array([list(t.values() if t=='k' else t.values()/100) for t in pros.ps])
         s_pro=np.array([list(t.values()) for t in pros.ps])
         # s_pro[:,1:]/=10
+        s_pro[:,-2:]=np.maximum(s_pro[:,-2:]-self.jf.delta_time,0)
         s_pro[:,-2:]/=100
         # s_job=np.array([[self.stepnum,self.jf.delta_time]])
-        s_job=np.array([[self.jf.delta_time]])
+        # s_job=np.array([[self.jf.delta_time]])
 
         # s_job=np.array([[job.time]])
         # jt=deepcopy(job.tasks)
@@ -74,7 +75,8 @@ class NEW_ENV:
         s_task=np.array(list(job.tasks_col.values()))
         # s_task[1:]/=100
         # s_task=np.array([list(t.values() if t=='k' else t.values()/100) for t in job.tasks])
-        result=np.concatenate([s_pro.T.reshape(1,-1),s_job,s_task.reshape(1,-1)],axis=1).astype(np.float32)
+        # result=np.concatenate([s_pro.T.reshape(1,-1),s_job,s_task.reshape(1,-1)],axis=1).astype(np.float32)
+        result=np.concatenate([s_pro.T.reshape(1,-1),s_task.reshape(1,-1)],axis=1).astype(np.float32)
         if maddpg:
             return [result.reshape(-1)]*self.jf.tasknum
         return result.reshape(-1)

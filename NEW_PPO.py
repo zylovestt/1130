@@ -85,11 +85,11 @@ class PPO:
             self.coptim.step()
 
             self.step+=1
-            self.writer.add_scalar('critic_loss',critic_loss,self.step)
-            self.writer.add_scalar('epo_loss',epo_loss,self.step)
-            self.writer.add_scalar('actor_loss',actor_loss,self.step)
-            self.writer.add_scalar('total_loss',loss,self.step)
-            self.writer.add_scalar('ratio',ratio.mean().item(),self.step)
+            # self.writer.add_scalar('critic_loss',critic_loss,self.step)
+            # self.writer.add_scalar('epo_loss',epo_loss,self.step)
+            # self.writer.add_scalar('actor_loss',actor_loss,self.step)
+            # self.writer.add_scalar('total_loss',loss,self.step)
+            # self.writer.add_scalar('ratio',ratio.mean().item(),self.step)
 
             # grad_max = 0.0
             # grad_means = 0.0

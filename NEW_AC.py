@@ -6,6 +6,17 @@ import numpy as np
 import NEW_rl_utils
 from NEW_STATE import fstate
 
+def onehot_from_logits(logits, eps):
+    ''' 生成最优动作的独热(one-hot)形式 '''
+    logits+=torch.randn(size=logits.shape,device=logits.device)*1e-1
+    hhh=(logits == logits.max(-1, keepdim=True)[0]).float()
+    while not (hhh.sum(-1)<1.5).all():
+        logits+=torch.randn(size=logits.shape,device=logits.device)*1e-1
+        hhh=(logits == logits.max(-1, keepdim=True)[0]).float()
+        print('same')
+    assert (hhh.sum(-1)<1.001).all()
+    return hhh
+
 class AC:
     def __init__(self,gamma,labda,act_clip_grad,cri_clip_grad,beta,anet,cnet,aoptim,coptim,device,writer:SummaryWriter):
         self.gamma=gamma
@@ -32,7 +43,8 @@ class AC:
             act=np.zeros(a.shape,dtype='int32')
             act[range(act.shape[0]),b]=1
         else:
-            act = (a == a.max(-1, keepdim=True)[0]).detach().cpu().numpy().astype('int32')
+            # act = (a == a.max(-1, keepdim=True)[0]).detach().cpu().numpy().astype('int32')
+            act=onehot_from_logits(a,None).detach().cpu().numpy()
         assert (act.sum(axis=-1)==1).all(),'act wrong'
         return act
     
@@ -82,10 +94,10 @@ class AC:
         self.coptim.step()
 
         self.step+=1
-        self.writer.add_scalar('critic_loss',critic_loss,self.step)
-        self.writer.add_scalar('epo_loss',epo_loss,self.step)
-        self.writer.add_scalar('actor_loss',actor_loss,self.step)
-        self.writer.add_scalar('total_loss',loss,self.step)
+        # self.writer.add_scalar('critic_loss',critic_loss,self.step)
+        # self.writer.add_scalar('epo_loss',epo_loss,self.step)
+        # self.writer.add_scalar('actor_loss',actor_loss,self.step)
+        # self.writer.add_scalar('total_loss',loss,self.step)
         
         # grad_max = 0.0
         # grad_means = 0.0

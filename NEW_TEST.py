@@ -1,8 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from PRINT import Logger
+from NEW_ENV2 import NEW_ENV
 
-def model_test(seed,env,agent,num_episodes,plot=False):
+def model_test(seed,env:NEW_ENV,agent,num_episodes,plot=False,path='./Default.log'):
     assert not (num_episodes>1 and plot)
+    logger=Logger(path)
     if plot:
         task_loc=[]
         pro_index=[]
@@ -12,10 +15,11 @@ def model_test(seed,env,agent,num_episodes,plot=False):
     for _ in range(num_episodes):
         episode_return = 0
         state = env.reset()
-        # print(env.job.tasks,env.job.loc,env.job.time,env.job.real_tasknum)
         done = 0
         while not done:
+            print(env.pros.ps,'\n',env.job.tasks,'\n',env.jf.delta_time,'\n')
             action = agent.take_action(state)
+            print(action)
             if plot:
                 task_loc.extend([(t['lx'],t['ly']) for t in env.job.tasks])
                 pro_index.extend(np.argmax(action,axis=-1).tolist())
@@ -35,4 +39,5 @@ def model_test(seed,env,agent,num_episodes,plot=False):
                 plt.scatter(tl[:,0],tl[:,1],label=str(i))
         plt.legend()
         fig.savefig('trace')
+    logger.reset()
     return np.mean(return_list)

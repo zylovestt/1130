@@ -16,7 +16,7 @@ if __name__=='__main__':
     mp.set_start_method('spawn')
     os.environ['OMP_NUM_THREADS'] = "1"
     start=time.time()
-    env,_,_,_,td3_anet,td3_qnet1,td3_qnet2,device,writer=start_env()
+    env,_,_,_,td3_anet,td3_qnet1,td3_qnet2,device,writer=start_env('cuda')
     print(device)
     aoptim=torch.optim.NAdam(td3_anet.parameters(),lr=1e-4,eps=1e-8) # lr=1e-4
     qoptim1=torch.optim.NAdam(td3_qnet1.parameters(),lr=1e-3,eps=1e-8) # lr=1e-3

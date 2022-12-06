@@ -39,7 +39,7 @@ def mpp_model_test(seed,env,agent:NEW_TD3.TD3,num_episodes,queue:mp.Queue):
 
 def collect(env,agent,qin,qout):
     agent.explore=True
-    done=None
+    done=1
     while True:
         s=qin.get()
         # if s is None:
@@ -47,21 +47,54 @@ def collect(env,agent,qin,qout):
         model,collect_num=s
         agent.actor.load_state_dict(model)
         steps=0
-        l=[None]*collect_num
+        l=[]
         # t_c=time.time()
         while steps<collect_num:
-            if done is None or done:
+            if done:
                 state = env.reset()
                 done = 0
             while not done and steps<collect_num:
                 with torch.no_grad():
                     action = agent.take_action(state)
                 next_state,reward,done,over = env.step(action)
-                l[steps]=(state, action.reshape(-1), reward, next_state, done, over)
+                l.append((state, action.reshape(-1), reward, next_state, done, over))
                 state = next_state
                 steps+=1
         qout.put(l)
         # print('t_c',time.time()-t_c)
+
+def on_policy_collect(env,agent,qin,qout,collect_num):
+    agent.explore=True
+    done=1
+    while True:
+        # print('ostart')
+        model=qin.get()
+        # print(model)
+        # print('ssgg')
+        # print(agent.actor)
+        agent.actor.load_state_dict(model)
+        # print('x1')
+        steps=0
+        transition_dict = {'states': [], 'actions': [], 'next_states': [], 'rewards': [], 'dones': [], 'overs': []}
+        while steps<collect_num:
+            if done:
+                # print('x2')
+                state = env.reset()
+                done = 0
+            while not done and steps<collect_num:
+                # print('x3')
+                with torch.no_grad():
+                    action = agent.take_action(state)
+                next_state,reward,done,over = env.step(action)
+                l=[state,action,next_state,reward,done,over]
+                for key,value in zip(transition_dict,l):
+                    transition_dict[key].append(value)
+                state = next_state
+                steps+=1
+            if done:
+                break
+        qout.put(transition_dict)
+        # print('x4')
 
 def train_on_policy_agent(test_seed,env:NEW_ENV,agent,num_episodes,cal_steps,writer:SummaryWriter,test_cycles,test_epochs):
     return_list = []
@@ -107,9 +140,98 @@ def train_on_policy_agent(test_seed,env:NEW_ENV,agent,num_episodes,cal_steps,wri
                         pbar.set_postfix({'episode': '%d' % (i * subloop_num + i_episode+1),
                                           'return': '%.3f' % np.mean(return_list[-10:]),
                                           'test_return': '%.3f' % test_return})
+                        pbar.update(1)
                     state = env.reset()
-                pbar.update(1)
+                # pbar.update(1)
     return return_list
+
+def mpp_train_on_policy_agent(test_seed,env:NEW_ENV,agent,num_episodes,cal_steps,test_cycles,test_epochs):
+    agent.explore=True
+    agent_mp=deepcopy(agent)
+    agent_mp.device='cpu'
+    agent_mp.actor.to('cpu')
+    agent_mp.cnet=None
+    agent_mp.aoptim=agent_mp.coptim=None
+    queue=mp.Queue()
+    test_proc = mp.Process(target=mpp_model_test,args=(test_seed,env,agent_mp,test_epochs,queue))
+    test_proc.start()
+    return_list = []
+    done_num=0
+    gstep=0
+    for i in range(10):
+        with tqdm(total=int(num_episodes/10), desc='Iteration %d' % i) as pbar:
+            episode_return = 0
+            state = env.reset()
+            done=0
+            for i_episode in range(int(num_episodes/10)):
+                transition_dict = {'states': [], 'actions': [], 'next_states': [], 'rewards': [], 'dones': [], 'overs': []}
+                step=0
+                while (not done) and (step<cal_steps):
+                    step+=1
+                    action = agent.take_action(state)
+                    next_state, reward, done, over = env.step(action)
+                    transition_dict['states'].append(state)
+                    transition_dict['actions'].append(action)
+                    assert (action.sum(axis=-1)==1).all(),'act wrong'
+                    transition_dict['next_states'].append(next_state)
+                    transition_dict['rewards'].append(reward)
+                    transition_dict['dones'].append(done)
+                    transition_dict['overs'].append(over)
+                    state = next_state
+                    episode_return += reward
+                agent.update(transition_dict)
+                if done:
+                    done_num+=1
+                    gstep+=1
+                    # writer.add_scalar('episode_return',episode_return,gstep)
+                    return_list.append(episode_return)
+                    episode_return = 0
+                    done=0
+                    if (i*int(num_episodes/10)+i_episode+1) % test_cycles == 0:
+                        queue.put(deepcopy(agent.actor).to('cpu').state_dict())
+                        pbar.set_postfix({'episode': '%d' % (num_episodes/10 * i + i_episode+1)})
+                    pbar.update(1)
+                    state = env.reset()
+                # pbar.update(1)
+    test_proc.terminate()
+    test_proc.join()
+    return return_list
+
+    
+
+def mppp_train_on_policy_agent(test_seed,env:NEW_ENV,agent,num_episodes,cal_steps,test_cycles,test_epochs):
+    agent.explore=True
+    agent_mp=deepcopy(agent)
+    agent_mp.device='cpu'
+    agent_mp.actor.to('cpu')
+    agent_mp.cnet=None
+    agent_mp.aoptim=agent_mp.coptim=None
+    queue=mp.Queue()
+    test_proc = mp.Process(target=mpp_model_test,args=(test_seed,env,agent_mp,test_epochs,queue))
+    test_proc.start()
+
+    collect_queue_in=mp.Queue()
+    collect_queue_out=mp.Queue()
+    agent_collect=deepcopy(agent_mp)
+    collect_proc=mp.Process(target=on_policy_collect,args=(env,agent_collect,collect_queue_in,collect_queue_out,cal_steps))
+    collect_proc.start()
+    # model=deepcopy(agent.actor).to('cpu').state_dict()
+    # agent_collect.actor.load_state_dict(model)
+    collect_queue_in.put(deepcopy(agent.actor).to('cpu').state_dict())
+    for i in range(10):
+        with tqdm(total=int(num_episodes/10), desc='Iteration %d' % i) as pbar:
+            for i_episode in range(int(num_episodes/10)):
+                collect_queue_in.put(deepcopy(agent.actor).to('cpu').state_dict())
+                agent.update(collect_queue_out.get())
+                if (i*int(num_episodes/10)+i_episode+1) % test_cycles == 0:
+                    queue.put(deepcopy(agent.actor).to('cpu').state_dict())
+                    pbar.set_postfix({'episode': '%d' % (num_episodes/10 * i + i_episode+1)})
+                pbar.update(1)
+
+    test_proc.terminate()
+    test_proc.join()
+    collect_proc.terminate()
+    collect_proc.join()
 
 class ReplayBuffer:
     def __init__(self, capacity,device):
@@ -332,6 +454,7 @@ def mpp_train_off_policy_agent(test_seed,env, agent:NEW_TD3.TD3, num_episodes, r
     data_proc.join()
     return return_list
 
+
 def mppp_train_off_policy_agent(test_seed,env, agent:NEW_TD3.TD3, num_episodes, replay_buffer, minimal_size, batch_size,update_num,test_cycles,test_epochs):
     agent.explore=True
     agent_mp=deepcopy(agent)
@@ -363,7 +486,6 @@ def mppp_train_off_policy_agent(test_seed,env, agent:NEW_TD3.TD3, num_episodes, 
                 # t_cuda=time.time()
                 agent.update(transition_dict)
                 # print('cuda',time.time()-t_cuda)
-                
                 if (i*int(num_episodes/10)+i_episode+1) % test_cycles == 0:
                     queue.put(deepcopy(agent.actor).to('cpu').state_dict())
                     pbar.set_postfix({'episode': '%d' % (num_episodes/10 * i + i_episode+1)})
@@ -373,7 +495,7 @@ def mppp_train_off_policy_agent(test_seed,env, agent:NEW_TD3.TD3, num_episodes, 
     test_proc.terminate()
     test_proc.join()
     collect_proc.terminate()
-    test_proc.join()
+    collect_proc.join()
 
 def compute_advantage_batch(gamma, lmbda, td_delta,dones):
     td_delta = td_delta.detach().numpy()
