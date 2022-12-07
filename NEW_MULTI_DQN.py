@@ -43,8 +43,9 @@ class MULTI_DQN:
                                             transition_dict['actions'],transition_dict['rewards'])
         with torch.no_grad():
             q_target=(rewards+self.gamma*self.target_actor(next_states).max(axis=-1)[0])
-        loss=self.critic_criterion((self.actor(states)*(actions.reshape(-1,8,8))).sum(dim=-1),q_target)
-
+        # loss=self.critic_criterion((self.actor(states)*(actions.reshape(-1,8,8))).sum(dim=-1),q_target)
+        loss=FU.mse_loss((self.actor(states)*(actions.reshape(-1,8,8))).sum(dim=-1),q_target)
+        # print('loss',loss)
         self.actor_optimizer.zero_grad()
         loss.backward()
         self.actor_optimizer.step()

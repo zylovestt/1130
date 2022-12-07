@@ -44,10 +44,12 @@ def start_env(device):
     print(env.pf.pros.ps)
 
     # env.normalize(1000)
-    # np.save('md_li_ab0.5',env.md)
-    # np.save('sd_li_ab0.5',env.sd)
+    # np.save('md_li_ab1',env.md)
+    # np.save('sd_li_ab1',env.sd)
     env.md=np.load('md_li_ab0.5.npy')
     env.sd=np.load('sd_li_ab0.5.npy')
+    # env.md=np.load('md_li_ab1.npy')
+    # env.sd=np.load('sd_li_ab1.npy')
     print('md',env.md,'sd',env.sd)
 
     # anet=QNet(env.state_size,1,500,2,500,env.pros.num,env.jf.tasknum).to(device)
