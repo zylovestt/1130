@@ -17,9 +17,11 @@ def model_test(seed,env:NEW_ENV,agent,num_episodes,plot=False,path='./Default.lo
         state = env.reset()
         done = 0
         while not done:
-            print(env.pros.ps,'\n',env.job.tasks,'\n',env.jf.delta_time,'\n')
+            if plot:
+                print(env.pros.ps,'\n',env.job.tasks,'\n',env.jf.delta_time,'\n')
             action = agent.take_action(state)
-            print(action)
+            if plot:
+                print(action)
             if plot:
                 task_loc.extend([(t['lx'],t['ly']) for t in env.job.tasks])
                 pro_index.extend(np.argmax(action,axis=-1).tolist())
