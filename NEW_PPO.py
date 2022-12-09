@@ -5,6 +5,7 @@ from torch.utils.tensorboard import SummaryWriter
 import numpy as np
 import NEW_rl_utils
 from NEW_STATE import fstate
+from NEW_TD3 import onehot_from_logits
 
 class PPO:
     def __init__(self,eps,epochs,gamma,labda,act_clip_grad,cri_clip_grad,beta,anet,cnet,aoptim,coptim,device,writer:SummaryWriter):
@@ -24,16 +25,31 @@ class PPO:
         self.step=0
         self.explore=True
     
+    # def take_action(self,state:np.ndarray):
+    #     # a=self.actor(fstate(lambda x:torch.tensor(x,dtype=torch.float32).to(self.device),state))[0]
+    #     F=lambda x:torch.tensor(np.array(x),dtype=torch.float32).to(self.device)
+    #     a=self.actor(F(state).unsqueeze(0))[0]
+    #     if self.explore:
+    #         b=torch.distributions.Categorical(logits=a).sample().detach().cpu().numpy()
+    #         act=np.zeros(a.shape,dtype='int32')
+    #         act[range(act.shape[0]),b]=1
+    #     else:
+    #         act = (a == a.max(-1, keepdim=True)[0]).detach().cpu().numpy().astype('int32')
+    #     assert (act.sum(axis=-1)==1).all(),'act wrong'
+    #     return act
+    
     def take_action(self,state:np.ndarray):
         # a=self.actor(fstate(lambda x:torch.tensor(x,dtype=torch.float32).to(self.device),state))[0]
         F=lambda x:torch.tensor(np.array(x),dtype=torch.float32).to(self.device)
         a=self.actor(F(state).unsqueeze(0))[0]
+        # print(a)
         if self.explore:
             b=torch.distributions.Categorical(logits=a).sample().detach().cpu().numpy()
             act=np.zeros(a.shape,dtype='int32')
             act[range(act.shape[0]),b]=1
         else:
-            act = (a == a.max(-1, keepdim=True)[0]).detach().cpu().numpy().astype('int32')
+            # act = (a == a.max(-1, keepdim=True)[0]).detach().cpu().numpy().astype('int32')
+            act=onehot_from_logits(a,None).detach().cpu().numpy()
         assert (act.sum(axis=-1)==1).all(),'act wrong'
         return act
     

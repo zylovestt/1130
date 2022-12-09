@@ -3,7 +3,6 @@ import torch
 import torch.nn.functional as FU
 from copy import deepcopy
 
-
 class SAC:
     ''' 处理离散动作的SAC算法 '''
     def __init__(self, anet,qnet1,qnet2,aoptim,qoptim1,qoptim2,alpha_lr, target_entropy, tau, gamma, device, writer):

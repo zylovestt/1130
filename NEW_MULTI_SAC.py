@@ -3,18 +3,19 @@ import torch
 import numpy as np
 import torch.nn.functional as FU
 import torch.nn.utils as nn_utils
-from torch.utils.tensorboard import SummaryWriter
+# from torch.utils.tensorboard import SummaryWriter
+from NEW_TD3 import onehot_from_logits
 
-def onehot_from_logits(logits, eps):
-    ''' 生成最优动作的独热(one-hot)形式 '''
-    logits+=torch.randn(size=logits.shape,device=logits.device)*1e-1
-    hhh=(logits == logits.max(-1, keepdim=True)[0]).float()
-    while not (hhh.sum(-1)<1.5).all():
-        logits+=torch.randn(size=logits.shape,device=logits.device)*1e-1
-        hhh=(logits == logits.max(-1, keepdim=True)[0]).float()
-        print('same')
-    assert (hhh.sum(-1)<1.001).all()
-    return hhh
+# def onehot_from_logits(logits, eps):
+#     ''' 生成最优动作的独热(one-hot)形式 '''
+#     logits+=torch.randn(size=logits.shape,device=logits.device)*1e-1
+#     hhh=(logits == logits.max(-1, keepdim=True)[0]).float()
+#     while not (hhh.sum(-1)<1.5).all():
+#         logits+=torch.randn(size=logits.shape,device=logits.device)*1e-1
+#         hhh=(logits == logits.max(-1, keepdim=True)[0]).float()
+#         print('same')
+#     assert (hhh.sum(-1)<1.001).all()
+#     return hhh
 
 class MULTI_SAC:
     ''' 处理离散动作的SAC算法 '''    
@@ -38,6 +39,8 @@ class MULTI_SAC:
         self.eps=0.0
         self.tem=1
         self.num_update=0
+        self.task_num=self.actor.task_num
+        self.pro_num=self.actor.pro_num
         self.target_actor.requires_grad_(False)
         self.target_critic1.requires_grad_(False)
         self.target_critic2.requires_grad_(False)
@@ -91,11 +94,11 @@ class MULTI_SAC:
 
         # 更新两个Q网络
         td_target = self.calc_target(rewards, next_states, 0)
-        critic_1_q_values = (self.critic1(states)*actions.reshape(-1,8,8)).sum(dim=-1)
+        critic_1_q_values = (self.critic1(states)*actions.reshape(-1,self.task_num,self.pro_num)).sum(dim=-1)
         critic_1_loss = torch.mean(FU.mse_loss(critic_1_q_values, td_target.detach()))
         # print('c1',critic_1_loss)
 
-        critic_2_q_values = (self.critic2(states)*actions.reshape(-1,8,8)).sum(dim=-1)
+        critic_2_q_values = (self.critic2(states)*actions.reshape(-1,self.task_num,self.pro_num)).sum(dim=-1)
         critic_2_loss = torch.mean(FU.mse_loss(critic_2_q_values, td_target.detach()))
         # print('c2',critic_2_loss)
 

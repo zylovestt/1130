@@ -21,9 +21,9 @@ if __name__=='__main__':
     qoptim=torch.optim.NAdam(qnet.parameters(),lr=1e-3,eps=1e-8) # lr=1e-4
     agent=MULTI_DQN(0.95,qnet,qoptim,1e-2,device)
     replay_buffer = Quick_ReplayBuffer(100000,device,env.state_size,env.action_size)
-    test_cycles=10000
-    test_epochs=1000
-    return_list=mppp_train_off_policy_agent(0,env,agent,100000,replay_buffer,10000,1024,10,test_cycles,test_epochs)
+    test_cycles=1000
+    test_epochs=500
+    return_list=mppp_train_off_policy_agent(0,env,agent,50000,replay_buffer,10000,1024,10,test_cycles,test_epochs)
     print('start test')
     ra=RandomAgent(9,env.pros.num,env.jf.tasknum)
     FTEST=lambda x:model_test(0,env,x,test_epochs)

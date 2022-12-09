@@ -190,9 +190,9 @@ def mpp_train_on_policy_agent(test_seed,env:NEW_ENV,agent,num_episodes,cal_steps
                     if (i*int(num_episodes/10)+i_episode+1) % test_cycles == 0:
                         queue.put(deepcopy(agent.actor).to('cpu').state_dict())
                         pbar.set_postfix({'episode': '%d' % (num_episodes/10 * i + i_episode+1)})
-                    pbar.update(1)
+                    # pbar.update(1)
                     state = env.reset()
-                # pbar.update(1)
+                pbar.update(1)
     test_proc.terminate()
     test_proc.join()
     return return_list

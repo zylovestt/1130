@@ -31,7 +31,7 @@ if __name__=='__main__':
 
     test_epochs=500
     # train_on_policy_agent(0,env, agent, 10000,5,writer,200,test_epochs)
-    mpp_train_on_policy_agent(0,env, agent, 100000,20,1000,test_epochs)
+    mpp_train_on_policy_agent(0,env, agent, 100000,10,1000,test_epochs)
     ra=RandomAgent(9,env.pros.num,env.jf.tasknum)
     FTEST=lambda x:print(model_test(0,env,x,test_epochs))
     agent.explore=False

@@ -5,17 +5,18 @@ from torch.utils.tensorboard import SummaryWriter
 import numpy as np
 import NEW_rl_utils
 from NEW_STATE import fstate
+from NEW_TD3 import onehot_from_logits
 
-def onehot_from_logits(logits, eps):
-    ''' 生成最优动作的独热(one-hot)形式 '''
-    logits+=torch.randn(size=logits.shape,device=logits.device)*1e-1
-    hhh=(logits == logits.max(-1, keepdim=True)[0]).float()
-    while not (hhh.sum(-1)<1.5).all():
-        logits+=torch.randn(size=logits.shape,device=logits.device)*1e-1
-        hhh=(logits == logits.max(-1, keepdim=True)[0]).float()
-        print('same')
-    assert (hhh.sum(-1)<1.001).all()
-    return hhh
+# def onehot_from_logits(logits, eps):
+#     ''' 生成最优动作的独热(one-hot)形式 '''
+#     logits+=torch.randn(size=logits.shape,device=logits.device)*1e-1
+#     hhh=(logits == logits.max(-1, keepdim=True)[0]).float()
+#     while not (hhh.sum(-1)<1.5).all():
+#         logits+=torch.randn(size=logits.shape,device=logits.device)*1e-1
+#         hhh=(logits == logits.max(-1, keepdim=True)[0]).float()
+#         print('same')
+#     assert (hhh.sum(-1)<1.001).all()
+#     return hhh
 
 class AC:
     def __init__(self,gamma,labda,act_clip_grad,cri_clip_grad,beta,anet,cnet,aoptim,coptim,device,writer:SummaryWriter):

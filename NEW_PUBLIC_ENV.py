@@ -34,7 +34,7 @@ def start_env(device):
     # pro_config['num_pro']=[0,0,0,0,1]
     PF=Pro_Flow(1,0,pro_config,pro_num,writer,True)
     # jc={'k':0.5,'r':(10,2),'loc_mean':(-10,10),'loc_scale':0.1,'time':(2,0)} #2,0???
-    jc={'k':0.5,'r':(1,0.15),'loc_mean':(-1,1),'loc_scale':0.1,'time':(5,0)} #2,0???
+    jc={'k':0.5,'r':(1,0.15),'loc_mean':(-1,1),'loc_scale':1,'time':(5,0)} #2,0???
     # jc={'k':0.5,'r':(10,200),'loc_mean':(-100,100),'loc_scale':1,'time':(20,0)}
     tasknum=8
     env_steps=100
@@ -46,10 +46,10 @@ def start_env(device):
     # env.normalize(1000)
     # np.save('md_li_ab1',env.md)
     # np.save('sd_li_ab1',env.sd)
-    env.md=np.load('md_li_ab0.5.npy')
-    env.sd=np.load('sd_li_ab0.5.npy')
-    # env.md=np.load('md_li_ab1.npy')
-    # env.sd=np.load('sd_li_ab1.npy')
+    # env.md=np.load('md_li_ab0.5.npy')
+    # env.sd=np.load('sd_li_ab0.5.npy')
+    env.md=np.load('md_li_ab1.npy')
+    env.sd=np.load('sd_li_ab1.npy')
     print('md',env.md,'sd',env.sd)
 
     # anet=QNet(env.state_size,1,500,2,500,env.pros.num,env.jf.tasknum).to(device)
