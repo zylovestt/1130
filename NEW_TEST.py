@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PRINT import Logger
 from NEW_ENV2 import NEW_ENV
+from pprint import pprint
 
 def model_test(seed,env:NEW_ENV,agent,num_episodes,plot=False,path='./Default.log'):
     assert not (num_episodes>1 and plot)
@@ -18,7 +19,9 @@ def model_test(seed,env:NEW_ENV,agent,num_episodes,plot=False,path='./Default.lo
         done = 0
         while not done:
             if plot:
-                print(env.pros.ps,'\n',env.job.tasks,'\n',env.jf.delta_time,'\n')
+                pprint(env.pros.ps)
+                pprint(env.job.tasks)
+                print('delta_time',env.jf.delta_time)
             action = agent.take_action(state)
             if plot:
                 print(action)

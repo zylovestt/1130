@@ -45,7 +45,7 @@ def gumbel_softmax(logits, temperature,eps):
     return y
 
 class TD3:
-    def __init__(self, anet:torch.nn.Module,qnet1:torch.nn.Module,qnet2:torch.nn.Module,aoptim,qoptim1,qoptim2, tau, gamma, device,writer:SummaryWriter,clip_grad):
+    def __init__(self, anet:torch.nn.Module,qnet1:torch.nn.Module,qnet2:torch.nn.Module,aoptim,qoptim1,qoptim2, tau, gamma, device,writer:SummaryWriter,clip_grad,conn,curs,date_time):
         self.actor = anet
         self.target_actor=deepcopy(anet)
         self.critic1 = qnet1
@@ -67,9 +67,15 @@ class TD3:
         self.eps=0.0
         self.tem=1
         self.num_update=0
+        self.conn=conn
+        self.curs=curs
+        self.date_time=date_time
         self.target_actor.requires_grad_(False)
         self.target_critic1.requires_grad_(False)
         self.target_critic2.requires_grad_(False)
+    
+    def insert_data(self,step,name,value):
+        self.curs.execute("insert into recordvalue values('%s','td3','%s',%d,%f)"%(self.date_time,name,step,value))
     
     def take_action(self,state):
         # a=(self.actor(fstate(lambda x:torch.tensor(x,dtype=torch.float32).to(self.device),state)))
@@ -132,6 +138,11 @@ class TD3:
             if not self.clip_grad=='max':
                     nn_utils.clip_grad_norm_(self.critic2.parameters(),self.clip_grad)
             self.critic_optimizer2.step()
+            # self.curs.execute("insert into recordvalue values('%s','td3','critic_loss1',self.c_epochs*self.num_update+i,%f)"%self.date_time,critic_loss1)
+            # self.curs.execute("insert into recordvalue values('%s','td3','critic_loss2',self.c_epochs*self.num_update+i,%f)"%self.date_time,critic_loss2)
+            self.insert_data(self.c_epochs*self.num_update+i,'critic_loss1',critic_loss1)
+            self.insert_data(self.c_epochs*self.num_update+i,'critic_loss2',critic_loss2)
+            # self.conn.commit()
             # self.writer.add_scalar('critic_loss1',critic_loss1,self.c_epochs*self.num_update+i)
             # self.writer.add_scalar('critic_loss2',critic_loss2,self.c_epochs*self.num_update+i)
 
@@ -155,6 +166,14 @@ class TD3:
             if not self.clip_grad=='max':
                     nn_utils.clip_grad_norm_(self.actor.parameters(),self.clip_grad)
             self.actor_optimizer.step()
+            # self.curs.execute("insert into recordvalue values('%s','td3','actor_loss',self.num_update//self.update_cycles,%f)"%self.date_time,critic_loss1)
+            # self.curs.execute("insert into recordvalue values('%s','td3','actor_norm',self.num_update//self.update_cycles,%f)"%self.date_time,actor_norm)
+            # self.curs.execute("insert into recordvalue values('%s','td3','critic_loss2',self.num_update//self.update_cycles,%f)"%self.date_time,critic_loss2)
+            self.insert_data(self.num_update//self.update_cycles,'actor_loss',actor_loss)
+            self.insert_data(self.num_update//self.update_cycles,'actor_norm',actor_norm)
+            self.insert_data(self.num_update//self.update_cycles,'epo_loss',epo_loss)
+            # self.conn.commit()
+
             # self.writer.add_scalar('actor_loss',actor_loss,self.num_update//self.update_cycles)
             # self.writer.add_scalar('actor_norm',actor_norm,self.num_update//self.update_cycles)
             # self.writer.add_scalar('epo_loss',epo_loss,self.num_update//self.update_cycles)

@@ -457,7 +457,10 @@ def mpp_train_off_policy_agent(test_seed,env, agent:NEW_TD3.TD3, num_episodes, r
 
 def mppp_train_off_policy_agent(test_seed,env, agent:NEW_TD3.TD3, num_episodes, replay_buffer, minimal_size, batch_size,update_num,test_cycles,test_epochs):
     agent.explore=True
+    conn,curs=agent.conn,agent.curs
+    agent.conn=agent.curs=None
     agent_mp=deepcopy(agent)
+    agent.conn,agent.curs=conn,curs
     agent_mp.device='cpu'
     agent_mp.actor.to('cpu')
     agent_mp.critic1=agent_mp.critic2=agent_mp.target_critic1=agent_mp.target_critic2=agent_mp.target_actor=None

@@ -1,6 +1,7 @@
+import time
 import numpy as np
 import pandas as pd
-from torch.utils.tensorboard import SummaryWriter
+# from torch.utils.tensorboard import SummaryWriter
 from NEW_ENV2 import Pro_Flow,Job_Flow,NEW_ENV,RandomAgent
 from NEW_NET import CriticNet,QNet,QNet2
 from copy import deepcopy
@@ -8,18 +9,22 @@ from NEW_rl_utils import train_on_policy_agent,train_off_policy_agent,ReplayBuff
 from NEW_TEST import model_test
 import random
 import torch.nn as nn
+from pprint import pprint
+import sqlite3
 
-def weight_init(m):
-    if isinstance(m, nn.Linear):
-        nn.init.xavier_normal_(m.weight)
-        nn.init.constant_(m.bias, 0)
-    # 也可以判断是否为conv2d，使用相应的初始化方式 
-    elif isinstance(m, nn.Conv2d):
-        nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
-    # 是否为批归一化层
-    elif isinstance(m, nn.BatchNorm2d):
-        nn.init.constant_(m.weight, 1)
-        nn.init.constant_(m.bias, 0)
+# print(__name__)
+
+# def weight_init(m):
+#     if isinstance(m, nn.Linear):
+#         nn.init.xavier_normal_(m.weight)
+#         nn.init.constant_(m.bias, 0)
+#     # 也可以判断是否为conv2d，使用相应的初始化方式 
+#     elif isinstance(m, nn.Conv2d):
+#         nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+#     # 是否为批归一化层
+#     elif isinstance(m, nn.BatchNorm2d):
+#         nn.init.constant_(m.weight, 1)
+#         nn.init.constant_(m.bias, 0)
 
 def start_env(device):
     device=device
@@ -41,7 +46,7 @@ def start_env(device):
     JF=Job_Flow(0,jc,tasknum,env_steps)
     # JF.cal_mean_scale(1000)
     env=NEW_ENV(PF,JF,env_steps,writer)
-    print(env.pf.pros.ps)
+    pprint(env.pf.pros.ps)
 
     # env.normalize(1000)
     # np.save('md_li_ab1',env.md)
@@ -80,4 +85,34 @@ def start_env(device):
     print(td3_anet)
     print(td3_qnet1)
     print(td3_qnet2)
-    return env,anet,cnet,qnet,td3_anet,td3_qnet1,td3_qnet2,device,writer
+
+    conn=sqlite3.connect('record.db')
+    curs=conn.cursor()
+    date_time=time.strftime('%Y-%m-%d %H:%M:%S')
+    return env,anet,cnet,qnet,td3_anet,td3_qnet1,td3_qnet2,device,writer,conn,curs,date_time
+
+if __name__=='__main__':
+    import time
+    print(time.strftime('%Y.%m.%d',time.localtime(time.time())))
+    print(time.strftime('%Y-%m-%d %H:%M:%S'))
+    conn=sqlite3.connect('record.db')
+    curs=conn.cursor()
+    t=time.strftime('%Y-%m-%d %H:%M:%S')
+    print(type(t))
+    print("insert into recordvalue values(%s,'td3','acloss',0,0.334)"%t)
+    curs.execute("insert into recordvalue values('%s','td3','acloss',0,0.334)"%t)
+    conn.commit()
+    # curs.execute('select getdate()')
+    # rows=curs.fetchone()
+    # print(rows)
+    curs.execute('drop table recordvalue')
+    try:
+        curs.execute('''create table recordvalue
+                        (date datetime,
+                        algorithm varchar(20),
+                        recordname varchar(20),
+                        step int,
+                        recordsize float,
+                        primary key(date,algorithm,recordname,step))''')
+    except Exception as e:
+        print(repr(e))

@@ -8,7 +8,7 @@ class Logger(object):
 
     def write(self, message):
         '''print实际相当于sys.stdout.write'''
-        self.terminal.write(message)
+        # self.terminal.write(message)
         self.log.write(message)
 
     def reset(self):
