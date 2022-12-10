@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as FU
 import torch.nn.utils as nn_utils
-from torch.utils.tensorboard import SummaryWriter
+# from torch.utils.tensorboard import SummaryWriter
 import numpy as np
 import NEW_rl_utils
 from NEW_STATE import fstate
@@ -19,7 +19,8 @@ from NEW_TD3 import onehot_from_logits
 #     return hhh
 
 class AC:
-    def __init__(self,gamma,labda,act_clip_grad,cri_clip_grad,beta,anet,cnet,aoptim,coptim,device,writer:SummaryWriter):
+    def __init__(self,gamma,labda,act_clip_grad,cri_clip_grad,beta,anet,cnet,aoptim,coptim,device,writer,conn,curs,date_time):
+        self.name='ac'
         self.gamma=gamma
         self.labda=labda
         self.act_clip_grad=act_clip_grad
@@ -33,6 +34,12 @@ class AC:
         self.writer=writer
         self.step=0
         self.explore=True
+        self.conn=conn
+        self.curs=curs
+        self.date_time=date_time
+    
+    def insert_data(self,step,name,value):
+        self.curs.execute("insert into recordvalue values('%s','ac','%s',%d,%f)"%(self.date_time,name,step,value))
     
     def take_action(self,state:np.ndarray):
         # a=self.actor(fstate(lambda x:torch.tensor(x,dtype=torch.float32).to(self.device),state))[0]
@@ -95,9 +102,12 @@ class AC:
         self.coptim.step()
 
         self.step+=1
+        self.insert_data(self.step,'critic_loss',critic_loss)
+        self.insert_data(self.step,'actor_loss',actor_loss)
+        self.insert_data(self.step,'epo_loss',epo_loss)
         # self.writer.add_scalar('critic_loss',critic_loss,self.step)
-        # self.writer.add_scalar('epo_loss',epo_loss,self.step)
         # self.writer.add_scalar('actor_loss',actor_loss,self.step)
+        # self.writer.add_scalar('epo_loss',epo_loss,self.step)
         # self.writer.add_scalar('total_loss',loss,self.step)
         
         # grad_max = 0.0

@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import cycler
+from matplotlib.ticker import MaxNLocator
 
 colors_=cycler('color',['#002bff','#3399BB','#9988DD','#EECC55','#88BB44','#FFBBBB','#EE6666'])
 # plt.rc('axes',facecolor='#fbf9f9',edgecolor='k',axisbelow=True,grid=True,prop_cycle=colors_)

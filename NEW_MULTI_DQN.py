@@ -20,12 +20,13 @@ from NEW_TD3 import onehot_from_logits
 #     return hhh
 
 class MULTI_DQN:
-    def __init__(self,gamma,qnet,qoptim,tau,device):
+    def __init__(self,gamma,qnet,qoptim,tau,device,conn,curs,date_time):
+        self.name='dqn'
         self.gamma=gamma
         self.actor=qnet
         self.target_actor=deepcopy(self.actor)
         self.actor_optimizer=qoptim
-        self.critic_criterion = torch.nn.MSELoss()
+        # self.critic_criterion = torch.nn.MSELoss()
         self.device=device
         self.explore=True
         self.tau=tau
@@ -33,7 +34,14 @@ class MULTI_DQN:
         self.pro_num=self.actor.pro_num
         self.critic1=self.critic2=self.target_critic1=self.target_critic2=None
         self.critic_optimizer1=self.critic_optimizer2=None
+        self.conn=conn
+        self.curs=curs
+        self.date_time=date_time
+        self.step=0
     
+    def insert_data(self,step,name,value):
+        self.curs.execute("insert into recordvalue values('%s','dqn','%s',%d,%f)"%(self.date_time,name,step,value))
+
     def take_action(self,state:np.ndarray):
         F=lambda x:torch.tensor(np.array(x),dtype=torch.float32).to(self.device)
         q_value=self.actor(F(state).unsqueeze(0))[0]
@@ -53,6 +61,8 @@ class MULTI_DQN:
         loss.backward()
         self.actor_optimizer.step()
         self.update_all_targets()
+        self.insert_data(self.step,'critic_loss',loss)
+        self.step+=1
     
     def update_all_targets(self):
         self.soft_update(self.actor, self.target_actor)

@@ -19,7 +19,8 @@ from NEW_TD3 import onehot_from_logits
 
 class MULTI_SAC:
     ''' 处理离散动作的SAC算法 '''    
-    def __init__(self, anet:torch.nn.Module,qnet1:torch.nn.Module,qnet2:torch.nn.Module,aoptim,qoptim1,qoptim2, tau, gamma, device,target_entropy,alpha_lr):
+    def __init__(self, anet:torch.nn.Module,qnet1:torch.nn.Module,qnet2:torch.nn.Module,aoptim,qoptim1,qoptim2, tau, gamma, device,target_entropy,alpha_lr,conn,curs,date_time):
+        self.name='sac'
         self.actor = anet
         self.target_actor=deepcopy(anet)
         self.critic1 = qnet1
@@ -41,6 +42,10 @@ class MULTI_SAC:
         self.num_update=0
         self.task_num=self.actor.task_num
         self.pro_num=self.actor.pro_num
+        self.conn=conn
+        self.curs=curs
+        self.date_time=date_time
+
         self.target_actor.requires_grad_(False)
         self.target_critic1.requires_grad_(False)
         self.target_critic2.requires_grad_(False)
@@ -50,6 +55,10 @@ class MULTI_SAC:
         self.log_alpha_optimizer = torch.optim.Adam([self.log_alpha],
                                                     lr=alpha_lr)
         self.target_entropy = target_entropy  # 目标熵的大小
+        self.step=0
+
+    def insert_data(self,step,name,value):
+        self.curs.execute("insert into recordvalue values('%s','sac','%s',%d,%f)"%(self.date_time,name,step,value))
 
     def take_action(self,state:np.ndarray):
         # a=self.actor(fstate(lambda x:torch.tensor(x,dtype=torch.float32).to(self.device),state))[0]
@@ -138,3 +147,10 @@ class MULTI_SAC:
 
         self.soft_update(self.critic1, self.target_critic1)
         self.soft_update(self.critic2, self.target_critic2)
+
+        self.insert_data(self.step,'critic_loss1',critic_1_loss)
+        self.insert_data(self.step,'critic_loss2',critic_2_loss)
+        self.insert_data(self.step,'actor_loss',actor_loss)
+        self.insert_data(self.step,'epo_loss',entropy.mean())
+        self.insert_data(self.step,'alpha_loss',alpha_loss)
+        self.step+=1

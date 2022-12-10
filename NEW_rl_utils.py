@@ -11,12 +11,13 @@ import torch.multiprocessing as mp
 import time
 import NEW_TD3
 
-def mpp_model_test(seed,env,agent:NEW_TD3.TD3,num_episodes,queue:mp.Queue):
+def mpp_model_test(seed,env,agent:NEW_TD3.TD3,num_episodes,queue:mp.Queue,qout:mp.Queue):
     agent.explore=False
     while True:
         model=queue.get()
-        # if model is None:
-        #     break
+        if model is None:
+            qout.put(None)
+            break
         agent.actor.load_state_dict(model)
         agent.rng=np.random.RandomState(seed)
         env.set_test_mode(seed)
@@ -35,7 +36,9 @@ def mpp_model_test(seed,env,agent:NEW_TD3.TD3,num_episodes,queue:mp.Queue):
                 episode_return += reward
             return_list.append(episode_return)
         env.set_train_mode()
-        print(np.mean(return_list))
+        test_return=np.mean(return_list)
+        print(test_return)
+        qout.put(test_return)
 
 def collect(env,agent,qin,qout):
     agent.explore=True
@@ -147,13 +150,17 @@ def train_on_policy_agent(test_seed,env:NEW_ENV,agent,num_episodes,cal_steps,wri
 
 def mpp_train_on_policy_agent(test_seed,env:NEW_ENV,agent,num_episodes,cal_steps,test_cycles,test_epochs):
     agent.explore=True
+    conn,curs,date_time=agent.conn,agent.curs,agent.date_time
+    agent.conn=agent.curs=None
     agent_mp=deepcopy(agent)
+    agent.conn,agent.curs=conn,curs
     agent_mp.device='cpu'
     agent_mp.actor.to('cpu')
     agent_mp.cnet=None
     agent_mp.aoptim=agent_mp.coptim=None
     queue=mp.Queue()
-    test_proc = mp.Process(target=mpp_model_test,args=(test_seed,env,agent_mp,test_epochs,queue))
+    test_qout=mp.Queue()
+    test_proc = mp.Process(target=mpp_model_test,args=(test_seed,env,agent_mp,test_epochs,queue,test_qout))
     test_proc.start()
     return_list = []
     done_num=0
@@ -193,6 +200,14 @@ def mpp_train_on_policy_agent(test_seed,env:NEW_ENV,agent,num_episodes,cal_steps
                     # pbar.update(1)
                     state = env.reset()
                 pbar.update(1)
+    queue.put(None)
+    step=0
+    while True:
+        r=test_qout.get()
+        if r is None:
+            break
+        curs.execute("insert into recordvalue values('%s','test_return','%s',%d,%f)"%(date_time,agent.name,step,r))
+        step+=1
     test_proc.terminate()
     test_proc.join()
     return return_list
@@ -358,9 +373,6 @@ def train_off_policy_agent(test_seed,env, agent, num_episodes, replay_buffer, mi
                 pbar.update(1)
     return return_list
 
-def ppf(x):
-    print('hello world'+x)
-
 def mp_train_off_policy_agent(test_seed,env, agent:NEW_TD3.TD3, num_episodes, replay_buffer, minimal_size, batch_size,update_num,test_cycles,test_epochs):
     data_proc_list=[]
     return_list = []
@@ -457,7 +469,7 @@ def mpp_train_off_policy_agent(test_seed,env, agent:NEW_TD3.TD3, num_episodes, r
 
 def mppp_train_off_policy_agent(test_seed,env, agent:NEW_TD3.TD3, num_episodes, replay_buffer, minimal_size, batch_size,update_num,test_cycles,test_epochs):
     agent.explore=True
-    conn,curs=agent.conn,agent.curs
+    conn,curs,date_time=agent.conn,agent.curs,agent.date_time
     agent.conn=agent.curs=None
     agent_mp=deepcopy(agent)
     agent.conn,agent.curs=conn,curs
@@ -466,7 +478,8 @@ def mppp_train_off_policy_agent(test_seed,env, agent:NEW_TD3.TD3, num_episodes, 
     agent_mp.critic1=agent_mp.critic2=agent_mp.target_critic1=agent_mp.target_critic2=agent_mp.target_actor=None
     agent_mp.actor_optimizer=agent_mp.critic_optimizer1=agent_mp.critic_optimizer2=None
     queue=mp.Queue()
-    test_proc = mp.Process(target=mpp_model_test,args=(test_seed,env,agent_mp,test_epochs,queue))
+    test_qout=mp.Queue()
+    test_proc = mp.Process(target=mpp_model_test,args=(test_seed,env,agent_mp,test_epochs,queue,test_qout))
     test_proc.start()
 
     collect_queue_in=mp.Queue()
@@ -495,6 +508,14 @@ def mppp_train_off_policy_agent(test_seed,env, agent:NEW_TD3.TD3, num_episodes, 
                 pbar.update(1)
     # queue.put(None)
     # collect_queue_in.put(None)
+    queue.put(None)
+    step=0
+    while True:
+        r=test_qout.get()
+        if r is None:
+            break
+        curs.execute("insert into recordvalue values('%s','test_return','%s',%d,%f)"%(date_time,agent.name,step,r))
+        step+=1
     test_proc.terminate()
     test_proc.join()
     collect_proc.terminate()

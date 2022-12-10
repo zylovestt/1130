@@ -46,6 +46,7 @@ def gumbel_softmax(logits, temperature,eps):
 
 class TD3:
     def __init__(self, anet:torch.nn.Module,qnet1:torch.nn.Module,qnet2:torch.nn.Module,aoptim,qoptim1,qoptim2, tau, gamma, device,writer:SummaryWriter,clip_grad,conn,curs,date_time):
+        self.name='td3'
         self.actor = anet
         self.target_actor=deepcopy(anet)
         self.critic1 = qnet1

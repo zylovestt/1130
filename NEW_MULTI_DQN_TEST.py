@@ -16,10 +16,10 @@ if __name__=='__main__':
     mp.set_start_method('spawn')
     os.environ['OMP_NUM_THREADS'] = "1"
     start=time.time()
-    env,_,_,_,qnet,_,_,device,writer=start_env('cuda')
+    env,_,_,_,qnet,_,_,device,writer,conn,curs,date_time=start_env('cuda')
     print(device)
     qoptim=torch.optim.NAdam(qnet.parameters(),lr=1e-3,eps=1e-8) # lr=1e-4
-    agent=MULTI_DQN(0.95,qnet,qoptim,1e-2,device)
+    agent=MULTI_DQN(0.95,qnet,qoptim,1e-2,device,conn,curs,date_time)
     replay_buffer = Quick_ReplayBuffer(100000,device,env.state_size,env.action_size)
     test_cycles=1000
     test_epochs=500
@@ -32,3 +32,6 @@ if __name__=='__main__':
     print('random:',FTEST(ra))
     model_test(0,env,agent,1,True)
     print('time:',time.time()-start)
+    conn.commit()
+    curs.close()
+    conn.close()

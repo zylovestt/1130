@@ -105,7 +105,7 @@ if __name__=='__main__':
     # curs.execute('select getdate()')
     # rows=curs.fetchone()
     # print(rows)
-    curs.execute('drop table recordvalue')
+    # curs.execute('drop table recordvalue')
     try:
         curs.execute('''create table recordvalue
                         (date datetime,
