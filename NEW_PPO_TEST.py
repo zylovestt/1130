@@ -20,7 +20,7 @@ if __name__=='__main__':
     coptim=torch.optim.NAdam(cnet.parameters(),lr=1e-3,eps=1e-8) # lr=1e-2
     # eps,epochs,gamma,labda,act_clip_grad,cri_clip_grad,beta,anet,cnet,aoptim,coptim,device
     # 0.8,3,0.96,0.95,1e-1,1e-1,1e-3
-    agent=PPO(0.2,5,0.95,0.95,1e-1,1e-1,0.5*1e-3,anet,cnet,aoptim,coptim,device,writer,conn,curs,date_time)
+    agent=PPO(0.2,5,0.95,0.95,1e-1,1e-1,1e-4,anet,cnet,aoptim,coptim,device,writer,conn,curs,date_time)
 
     # train_on_policy_agent(9,env, agent, 500,10,writer)
     # ra=RandomAgent(9,env.pros.num,env.jf.tasknum)
@@ -30,8 +30,15 @@ if __name__=='__main__':
     # FTEST(ra)
 
     test_epochs=500
+
+    # update_steps=10
+    # # train_on_policy_agent(0,env, agent, 10000,5,writer,200,test_epochs)
+    # mpp_train_on_policy_agent(0,env, agent, 50000*update_steps,update_steps,1000*update_steps,test_epochs)
+
+    update_steps=10
     # train_on_policy_agent(0,env, agent, 10000,5,writer,200,test_epochs)
-    mpp_train_on_policy_agent(0,env, agent, 100000,10,1000,test_epochs)
+    mppp_train_on_policy_agent(0,env, agent, 50000,update_steps,1000,test_epochs)
+
     ra=RandomAgent(9,env.pros.num,env.jf.tasknum)
     FTEST=lambda x:print(model_test(0,env,x,test_epochs))
     agent.explore=False

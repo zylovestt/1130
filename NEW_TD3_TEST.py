@@ -26,9 +26,9 @@ if __name__=='__main__':
     # anet,qnet1,qnet2,aoptim,qoptim1,qoptim2, tau, gamma, device,writer
     agent=TD3(td3_anet,td3_qnet1,td3_qnet2,aoptim,qoptim1,qoptim2,1e-2,0.95,device,writer,1e-1,conn,curs,date_time)
     replay_buffer = Quick_ReplayBuffer(100000,device,env.state_size,env.action_size)
-    test_cycles=100
-    test_epochs=50
-    return_list=mppp_train_off_policy_agent(0,env,agent,500,replay_buffer,1050,1024,10,test_cycles,test_epochs)
+    test_cycles=1000
+    test_epochs=500
+    return_list=mppp_train_off_policy_agent(0,env,agent,50000,replay_buffer,10000,1024,10,test_cycles,test_epochs)
     print('start test')
     ra=RandomAgent(9,env.pros.num,env.jf.tasknum)
     FTEST=lambda x:model_test(0,env,x,test_epochs)

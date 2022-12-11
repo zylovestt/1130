@@ -21,9 +21,15 @@ if __name__=='__main__':
     # gamma,labda,act_clip_grad,cri_clip_grad,beta,anet,cnet,aoptim,coptim,device
     # 0.96,0.95,1e-1,1e-1,1e-3
     agent=AC(0.95,0.95,1e-1,1e-1,1,anet,cnet,aoptim,coptim,device,writer,conn,curs,date_time)
-    test_epochs=50
-    # train_on_policy_agent(0,env,agent,100000,5,writer,200,test_epochs)
-    mpp_train_on_policy_agent(0,env,agent,500,10,100,test_epochs) #mppp不是标准的同步策略,mpp貌似好些
+    test_epochs=500
+
+    # # train_on_policy_agent(0,env,agent,100000,5,writer,200,test_epochs)
+    # mpp_train_on_policy_agent(0,env,agent,50000,10,1000*10,test_epochs) #mppp不是标准的同步策略,mpp貌似好些
+
+    update_steps=10
+    # train_on_policy_agent(0,env, agent, 10000,5,writer,200,test_epochs)
+    mppp_train_on_policy_agent(0,env, agent, 50000,update_steps,1000,test_epochs)
+
     ra=RandomAgent(9,env.pros.num,env.jf.tasknum)
     FTEST=lambda x:print(model_test(0,env,x,test_epochs))
     agent.explore=False

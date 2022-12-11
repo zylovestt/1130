@@ -35,5 +35,5 @@ class Plot_Summary:
 
 if __name__=='__main__':
     pls=Plot_Summary('record.db')
-    pls.plot_latest_rewards(['td3','ac'])
+    pls.plot_latest_rewards(['td3','ac','sac','dqn','ppo'])
 

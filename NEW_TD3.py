@@ -153,10 +153,14 @@ class TD3:
             # act_vf_in = gumbel_softmax(actor_out,self.tem,self.eps)
             act_vf_in=FU.gumbel_softmax(actor_out,tau=self.tem,dim=-1,hard=True)
             vf_in = torch.cat((states, act_vf_in.reshape(act_vf_in.shape[0],-1)), dim=1)
-            # actor_loss = -torch.min(self.critic1(vf_in),self.critic2(vf_in)).mean() #ffffffffffffffff
+
+            
             self.critic1.requires_grad_(False)
-            actor_loss = -self.critic1(vf_in).mean() #ffffffffffffffff
+            self.critic2.requires_grad_(False)
+            actor_loss = -torch.min(self.critic1(vf_in),self.critic2(vf_in)).mean() #ffffffffffffffff
+            # actor_loss = -self.critic1(vf_in).mean() #ffffffffffffffff
             self.critic1.requires_grad_(True)
+            self.critic2.requires_grad_(True)
             actor_norm = (((actor_out>-1e7).float()*actor_out)**2).mean()
             # actor_norm = (actor_out**2).mean()
             # actor_loss += actor_norm*1e-3

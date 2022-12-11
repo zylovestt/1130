@@ -194,11 +194,12 @@ def mpp_train_on_policy_agent(test_seed,env:NEW_ENV,agent,num_episodes,cal_steps
                     return_list.append(episode_return)
                     episode_return = 0
                     done=0
-                    if (i*int(num_episodes/10)+i_episode+1) % test_cycles == 0:
-                        queue.put(deepcopy(agent.actor).to('cpu').state_dict())
-                        pbar.set_postfix({'episode': '%d' % (num_episodes/10 * i + i_episode+1)})
+                    
                     # pbar.update(1)
                     state = env.reset()
+                if (i*int(num_episodes/10)+i_episode) % test_cycles == 0:
+                        queue.put(deepcopy(agent.actor).to('cpu').state_dict())
+                        pbar.set_postfix({'episode': '%d' % (num_episodes/10 * i + i_episode)})
                 pbar.update(1)
     queue.put(None)
     step=0
@@ -212,17 +213,19 @@ def mpp_train_on_policy_agent(test_seed,env:NEW_ENV,agent,num_episodes,cal_steps
     test_proc.join()
     return return_list
 
-    
-
 def mppp_train_on_policy_agent(test_seed,env:NEW_ENV,agent,num_episodes,cal_steps,test_cycles,test_epochs):
     agent.explore=True
+    conn,curs,date_time=agent.conn,agent.curs,agent.date_time
+    agent.conn=agent.curs=None
     agent_mp=deepcopy(agent)
+    agent.conn,agent.curs=conn,curs
     agent_mp.device='cpu'
     agent_mp.actor.to('cpu')
     agent_mp.cnet=None
     agent_mp.aoptim=agent_mp.coptim=None
     queue=mp.Queue()
-    test_proc = mp.Process(target=mpp_model_test,args=(test_seed,env,agent_mp,test_epochs,queue))
+    test_qout=mp.Queue()
+    test_proc = mp.Process(target=mpp_model_test,args=(test_seed,env,agent_mp,test_epochs,queue,test_qout))
     test_proc.start()
 
     collect_queue_in=mp.Queue()
@@ -232,17 +235,24 @@ def mppp_train_on_policy_agent(test_seed,env:NEW_ENV,agent,num_episodes,cal_step
     collect_proc.start()
     # model=deepcopy(agent.actor).to('cpu').state_dict()
     # agent_collect.actor.load_state_dict(model)
-    collect_queue_in.put(deepcopy(agent.actor).to('cpu').state_dict())
+    # collect_queue_in.put(deepcopy(agent.actor).to('cpu').state_dict())
     for i in range(10):
         with tqdm(total=int(num_episodes/10), desc='Iteration %d' % i) as pbar:
             for i_episode in range(int(num_episodes/10)):
                 collect_queue_in.put(deepcopy(agent.actor).to('cpu').state_dict())
                 agent.update(collect_queue_out.get())
-                if (i*int(num_episodes/10)+i_episode+1) % test_cycles == 0:
+                if (i*int(num_episodes/10)+i_episode) % test_cycles == 0:
                     queue.put(deepcopy(agent.actor).to('cpu').state_dict())
-                    pbar.set_postfix({'episode': '%d' % (num_episodes/10 * i + i_episode+1)})
+                    pbar.set_postfix({'episode': '%d' % (num_episodes/10 * i + i_episode)})
                 pbar.update(1)
-
+    queue.put(None)
+    step=0
+    while True:
+        r=test_qout.get()
+        if r is None:
+            break
+        curs.execute("insert into recordvalue values('%s','test_return','%s',%d,%f)"%(date_time,agent.name,step,r))
+        step+=1
     test_proc.terminate()
     test_proc.join()
     collect_proc.terminate()
@@ -502,9 +512,9 @@ def mppp_train_off_policy_agent(test_seed,env, agent:NEW_TD3.TD3, num_episodes, 
                 # t_cuda=time.time()
                 agent.update(transition_dict)
                 # print('cuda',time.time()-t_cuda)
-                if (i*int(num_episodes/10)+i_episode+1) % test_cycles == 0:
+                if (i*int(num_episodes/10)+i_episode) % test_cycles == 0:
                     queue.put(deepcopy(agent.actor).to('cpu').state_dict())
-                    pbar.set_postfix({'episode': '%d' % (num_episodes/10 * i + i_episode+1)})
+                    pbar.set_postfix({'episode': '%d' % (num_episodes/10 * i + i_episode)})
                 pbar.update(1)
     # queue.put(None)
     # collect_queue_in.put(None)
