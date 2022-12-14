@@ -3,7 +3,7 @@ import torch
 import numpy as np
 import torch.nn.functional as FU
 import torch.nn.utils as nn_utils
-from torch.utils.tensorboard import SummaryWriter
+# from torch.utils.tensorboard import SummaryWriter
 
 # def onehot_from_logits(logits, eps):
 #     ''' 生成最优动作的独热(one-hot)形式 '''
@@ -45,7 +45,7 @@ def gumbel_softmax(logits, temperature,eps):
     return y
 
 class TD3:
-    def __init__(self, anet:torch.nn.Module,qnet1:torch.nn.Module,qnet2:torch.nn.Module,aoptim,qoptim1,qoptim2, tau, gamma, device,writer:SummaryWriter,clip_grad,conn,curs,date_time):
+    def __init__(self, anet:torch.nn.Module,qnet1:torch.nn.Module,qnet2:torch.nn.Module,aoptim,qoptim1,qoptim2, tau, gamma, device,writer,clip_grad,conn,curs,date_time):
         self.name='td3'
         self.actor = anet
         self.target_actor=deepcopy(anet)
@@ -86,6 +86,8 @@ class TD3:
         if self.explore:
             # a=gumbel_softmax(a,self.tem,self.eps)[0]
             a=FU.gumbel_softmax(a,tau=self.tem,dim=-1,hard=True)[0]
+            # a=FU.gumbel_softmax(a,tau=self.tem,dim=-1,hard=False)[0]
+
 
             # b=torch.distributions.Categorical(logits=a[0]).sample().detach().cpu().numpy()
             # act=np.zeros(a.shape[1:],dtype='int32')
@@ -95,6 +97,21 @@ class TD3:
             a=onehot_from_logits(a,self.eps)[0]
         return a.detach().cpu().numpy()
         # return (a.detach().cpu().numpy()[0]>0.99).astype('int')
+    
+    # def take_action(self,state:np.ndarray):
+    #     # a=self.actor(fstate(lambda x:torch.tensor(x,dtype=torch.float32).to(self.device),state))[0]
+    #     F=lambda x:torch.tensor(np.array(x),dtype=torch.float32).to(self.device)
+    #     a=self.actor(F(state).unsqueeze(0))[0]
+    #     # print(a)
+    #     if self.explore:
+    #         b=torch.distributions.Categorical(logits=a).sample().detach().cpu().numpy()
+    #         act=np.zeros(a.shape,dtype='int32')
+    #         act[range(act.shape[0]),b]=1
+    #     else:
+    #         # act = (a == a.max(-1, keepdim=True)[0]).detach().cpu().numpy().astype('int32')
+    #         act=onehot_from_logits(a,None).detach().cpu().numpy()
+    #     assert (act.sum(axis=-1)==1).all(),'act wrong'
+    #     return act
     
     def update(self,transition_dict:dict):
         self.num_update+=1
@@ -120,6 +137,7 @@ class TD3:
         self.critic_optimizer1.zero_grad()
         self.critic_optimizer2.zero_grad()
         target_act=onehot_from_logits(self.target_actor(next_states),self.eps) #@@@@@@@@@@@@@@@@@@@
+        # target_act=FU.gumbel_softmax(self.target_actor(next_states),tau=self.tem,dim=-1,hard=False) #@@@@@@@@@@@@@@@@@@@
         # target_act=gumbel_softmax(self.target_actor(next_states),self.tem,self.eps) #@@@@@@@@@@@@@@@@@@@
         target_critic_input = torch.cat((next_states,target_act.reshape(target_act.shape[0],-1)), dim=-1)
         target_critic_value = rewards + self.gamma * torch.min(
@@ -152,6 +170,7 @@ class TD3:
             actor_out = self.actor(states)
             # act_vf_in = gumbel_softmax(actor_out,self.tem,self.eps)
             act_vf_in=FU.gumbel_softmax(actor_out,tau=self.tem,dim=-1,hard=True)
+            # act_vf_in=FU.gumbel_softmax(actor_out,tau=self.tem,dim=-1,hard=False)
             vf_in = torch.cat((states, act_vf_in.reshape(act_vf_in.shape[0],-1)), dim=1)
 
             
@@ -192,3 +211,9 @@ class TD3:
     def soft_update(self, net, target_net):
         for param_target, param in zip(target_net.parameters(),net.parameters()):
             param_target.data.copy_(param_target.data * (1.0 - self.tau) + param.data * self.tau)
+
+    def save_model(self,path):
+        torch.save(self.actor,path)
+    
+    def load_model(self,path):
+        self.actor=torch.load(path)

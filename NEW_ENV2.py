@@ -98,7 +98,7 @@ class NEW_ENV:
     def step(self,act,maddpg=False): # 输入的act是原始的
         if maddpg:
             act=np.vstack(act)
-            act=(act==act.max(-1,keepdims=True)).astype('int')
+            # act=(act==act.max(-1,keepdims=True)).astype('int')
             # print(act)
         # print('1 ',mask)
         # print('2 ',act)
