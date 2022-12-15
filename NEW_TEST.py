@@ -5,9 +5,11 @@ from NEW_ENV2 import NEW_ENV
 from pprint import pprint
 
 def model_test(seed,env:NEW_ENV,agent,num_episodes,plot=False,path='./Default.log'):
+    agent.explore=False
     assert not (num_episodes>1 and plot)
     logger=Logger(path)
     if plot:
+        task_mask=[]
         task_loc=[]
         pro_index=[]
     agent.rng=np.random.RandomState(seed)
@@ -26,6 +28,7 @@ def model_test(seed,env:NEW_ENV,agent,num_episodes,plot=False,path='./Default.lo
             if plot:
                 print(action)
             if plot:
+                task_mask.extend([bool(t['k']) for t in env.job.tasks])
                 task_loc.extend([(t['lx'],t['ly']) for t in env.job.tasks])
                 pro_index.extend(np.argmax(action,axis=-1).tolist())
             # print(action)
@@ -35,10 +38,10 @@ def model_test(seed,env:NEW_ENV,agent,num_episodes,plot=False,path='./Default.lo
         return_list.append(episode_return)
     env.set_train_mode()
     if plot:
-        task_loc=np.array(task_loc)
-        pro_index=np.array(pro_index)
+        task_loc=np.array(task_loc)[task_mask]
+        pro_index=np.array(pro_index)[task_mask]
         fig=plt.figure()
-        for i in range(len(action)):
+        for i in range(len(action[0])):
             tl=task_loc[pro_index==i]
             if len(tl):
                 plt.scatter(tl[:,0],tl[:,1],label=str(i))

@@ -20,7 +20,7 @@ from NEW_TD3 import onehot_from_logits
 #     return hhh
 
 class MULTI_DQN:
-    def __init__(self,gamma,qnet,qoptim,tau,device,conn,curs,date_time):
+    def __init__(self,gamma,qnet,qoptim,tau,device,clip_grad,conn,curs,date_time):
         self.name='dqn'
         self.gamma=gamma
         self.actor=qnet
@@ -34,6 +34,7 @@ class MULTI_DQN:
         self.pro_num=self.actor.pro_num
         self.critic1=self.critic2=self.target_critic1=self.target_critic2=None
         self.critic_optimizer1=self.critic_optimizer2=None
+        self.clip_grad=clip_grad
         self.conn=conn
         self.curs=curs
         self.date_time=date_time
@@ -59,6 +60,8 @@ class MULTI_DQN:
         # print('loss',loss)
         self.actor_optimizer.zero_grad()
         loss.backward()
+        if not self.clip_grad=='max':
+            nn_utils.clip_grad_norm_(self.actor.parameters(),self.clip_grad)
         self.actor_optimizer.step()
         self.update_all_targets()
         self.insert_data(self.step,'critic_loss',loss)

@@ -114,11 +114,13 @@ class Pro_Flow:
             n=self.num
             columns=['k','c','r','v','lx','ly','alpha','beta'] #k必须放在第一位
             p={key:[0]*n for key in columns}
+            # p={key:np.zeros(n) for key in columns}
             # p=pd.DataFrame(np.zeros((self.num,len(columns))),columns=columns)
-            RF=lambda x,y:rng.normal(*self.pro_config[x],y)
-            # RF=lambda x,y:rng.uniform(*self.pro_config[x],y)
-            # num_pro=self.rng.choice(self.num,p=self.pro_config['num_pro'])+1
-            num_pro=self.rng.binomial(n-1,self.pro_config['num_pro'])+1
+            # RF=lambda x,y:rng.normal(*self.pro_config[x],y)
+            RF=lambda x,y:rng.uniform(*self.pro_config[x],y)
+            num_pro=self.rng.choice(self.num,p=self.pro_config['p'])+1
+            # num_pro=self.rng.binomial(n-1,self.pro_config['num_pro'])+1
+            # s=self.rng.choice(n,size=num_pro,replace=False)
             s=slice(0,num_pro,None)
             p['k'][s]=[1]*num_pro
             # p['c'][s]=RF('c',num_pro)
@@ -184,9 +186,88 @@ class Job_Flow:
         # self.loc_Y=loc_XY[:,tasknum:]
         self.loc_X=loc_mean[:,0:1]+rng.normal(scale=scale,size=(max_length,tasknum))
         self.loc_Y=loc_mean[:,1:]+rng.normal(scale=scale,size=(max_length,tasknum))
+        self.r*=self.k_mask
+        self.loc_X*=self.k_mask
+        self.loc_Y*=self.k_mask
         # self.job_time_break=np.array([rng.exponential(x) for x in job_config['time']*max_length])
         # self.job_time_break=rng.normal(*job_config['time'],max_length)
         self.job_time_break=rng.exponential(job_config['time'][0],max_length)
+        self.step=0
+        self.time=0
+    
+    def cal_mean_scale(self,epochs):
+        l=self.max_length
+        self.max_length*=epochs
+        rng=deepcopy(self.rng)
+        self.reset()
+        self.mean={'k':self.k_num.mean(),'r':self.r.mean(),'lx':self.loc_X.mean(),'ly':self.loc_Y.mean(),'t':self.job_time_break.mean()}
+        self.scale={'k':self.k_num.std(),'r':self.r.std(),'lx':self.loc_X.std(),'ly':self.loc_Y.std(),'t':self.job_time_break.std()}
+        self.max_length=l
+        self.rng=rng
+
+    def __iter__(self):
+        return self
+    
+    def __next__(self):
+        s=self.step
+        k,r,lx,ly,t=self.k_mask[s],self.r[s],self.loc_X[s],self.loc_Y[s],self.job_time_break[s%len(self.job_config['time'])]
+        self.step=(self.step+1)%self.max_length
+        self.time+=t
+        self.delta_time=t
+        d_col={'k':k,'r':r,'lx':lx,'ly':ly}
+        d=np.array([{k:d_col[k][i] for k in d_col} for i in range(self.tasknum)])
+        return JOB(d,d_col,self.time)
+
+class Job_Flow_Change:
+    def __init__(self,seed,job_config,tasknum,max_length):
+        self.rng=np.random.RandomState(seed)
+        self.job_config=job_config
+        self.tasknum=tasknum
+        self.max_length=max_length
+        self.delta_time=None
+        self.reset()
+    
+    def set_train_mode(self):
+        self.rng=self.train_rng
+    
+    def set_test_mode(self,seed):
+        self.train_rng=self.rng
+        self.rng=np.random.RandomState(seed)
+
+    def reset(self):
+        rng=self.rng
+        tasknum=self.tasknum
+        max_length=self.max_length
+        job_config=self.job_config
+        self.k_num=np.empty(self.max_length)
+        self.k_num[:]=rng.choice(tasknum,p=self.job_config['p'])
+        size=(max_length,tasknum)
+        a=np.empty(size)
+        a[:]=np.arange(tasknum).reshape(1,-1)
+        self.k_mask=(a<=self.k_num.reshape(-1,1)).astype('float')
+        # self.k_mask=np.array([self.rng.shuffle(self.k_mask[i]) for i in range(len(self.k_mask))])
+        self.r=rng.normal(*job_config['r'],size)
+        
+        # self.r*=self.k_mask
+        # self.r=rng.uniform(*job_config['r'],size)
+        assert (self.r>=0).all()
+        loc_mean=rng.uniform(*job_config['loc_mean'],size=(max_length,2))
+        scale=self.rng.uniform(high=job_config['loc_scale'])
+        # loc_XY=np.empty((max_length,2*tasknum))
+        # for x,loc in zip(loc_XY,loc_mean):
+        #     x[:]=rng.normal(loc,scale,2*tasknum)
+        # self.loc_X=loc_XY[:,:tasknum]
+        # self.loc_Y=loc_XY[:,tasknum:]
+        self.loc_X=loc_mean[:,0:1]+rng.normal(scale=scale,size=(max_length,tasknum))
+        
+        self.loc_Y=loc_mean[:,1:]+rng.normal(scale=scale,size=(max_length,tasknum))
+        self.r*=self.k_mask
+        self.loc_X*=self.k_mask
+        self.loc_Y*=self.k_mask
+        # self.job_time_break=np.array([rng.exponential(x) for x in job_config['time']*max_length])
+        # self.job_time_break=rng.normal(*job_config['time'],max_length)
+        lam=self.rng.uniform(job_config['time'][0])
+        self.job_time_break=rng.exponential(lam,max_length)
         self.step=0
         self.time=0
     

@@ -187,9 +187,12 @@ class TD3_SAC:
 
             self.critic_optimizer1.zero_grad()
             critic_loss1.backward()
-            
+            if not self.clip_grad=='max':
+                nn_utils.clip_grad_norm_(self.critic1.parameters(),self.clip_grad)
             self.critic_optimizer2.zero_grad()
             critic_loss2.backward()
+            if not self.clip_grad=='max':
+                nn_utils.clip_grad_norm_(self.critic2.parameters(),self.clip_grad)
             
 
             
@@ -273,6 +276,8 @@ class TD3_SAC:
             self.actor_optimizer.zero_grad()
             # print('al',actor_loss)
             actor_loss.backward()
+            if not self.clip_grad=='max':
+                nn_utils.clip_grad_norm_(self.actor.parameters(),self.clip_grad)
             self.actor_optimizer.step()
 
             #更新alpha值

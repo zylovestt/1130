@@ -19,7 +19,7 @@ from NEW_TD3 import onehot_from_logits
 
 class MULTI_SAC:
     ''' 处理离散动作的SAC算法 '''    
-    def __init__(self, anet:torch.nn.Module,qnet1:torch.nn.Module,qnet2:torch.nn.Module,aoptim,qoptim1,qoptim2, tau, gamma, device,target_entropy,alpha_lr,conn,curs,date_time):
+    def __init__(self, anet:torch.nn.Module,qnet1:torch.nn.Module,qnet2:torch.nn.Module,aoptim,qoptim1,qoptim2, tau, gamma, device,target_entropy,alpha_lr,clip_grad,conn,curs,date_time):
         self.name='sac'
         self.actor = anet
         self.target_actor=deepcopy(anet)
@@ -42,6 +42,7 @@ class MULTI_SAC:
         self.num_update=0
         self.task_num=self.actor.task_num
         self.pro_num=self.actor.pro_num
+        self.clip_grad=clip_grad
         self.conn=conn
         self.curs=curs
         self.date_time=date_time
@@ -113,10 +114,14 @@ class MULTI_SAC:
 
         self.critic_optimizer1.zero_grad()
         critic_1_loss.backward()
+        if not self.clip_grad=='max':
+            nn_utils.clip_grad_norm_(self.critic1.parameters(),self.clip_grad)
         self.critic_optimizer1.step()
 
         self.critic_optimizer2.zero_grad()
         critic_2_loss.backward()
+        if not self.clip_grad=='max':
+            nn_utils.clip_grad_norm_(self.critic2.parameters(),self.clip_grad)
         self.critic_optimizer2.step()
 
         # 更新策略网络
@@ -133,6 +138,8 @@ class MULTI_SAC:
         self.actor_optimizer.zero_grad()
         # print('al',actor_loss)
         actor_loss.backward()
+        if not self.clip_grad=='max':
+            nn_utils.clip_grad_norm_(self.actor.parameters(),self.clip_grad)
         self.actor_optimizer.step()
 
         #更新alpha值

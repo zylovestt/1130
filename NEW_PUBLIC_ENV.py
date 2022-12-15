@@ -2,7 +2,8 @@ import time
 import numpy as np
 import pandas as pd
 # from torch.utils.tensorboard import SummaryWriter
-from NEW_ENV2 import Pro_Flow,Job_Flow,NEW_ENV,RandomAgent
+from NEW_ENV2 import NEW_ENV,RandomAgent
+from NEW_JobFlow import Pro_Flow,Job_Flow_Change
 from NEW_NET import CriticNet,QNet,QNet2
 from copy import deepcopy
 from NEW_rl_utils import train_on_policy_agent,train_off_policy_agent,ReplayBuffer,NEW_ReplayBuffer,Quick_ReplayBuffer
@@ -31,30 +32,34 @@ def start_env(device):
     # writer=SummaryWriter(comment='NEW_ENV')
     writer=None
     # pro_config={'c':(10,2),'r':(50,10),'v':(10,2)}
-    pro_config={'c':(1,0.15),'r':(5,0.75),'v':(0.1,0.015),'lx':(-1,1),'ly':(-1,1),'alpha':(0,300),'beta':(0,50)}
+    # pro_config={'c':(1,0.15),'r':(5,0.75),'v':(0.1,0.015),'lx':(-1,1),'ly':(-1,1),'alpha':(0,300),'beta':(0,50)}  #normal
+    pro_config={'c':(0.4,1.6),'r':(2,8),'v':(0.04,0.16),'lx':(-1,1),'ly':(-1,1),'alpha':(0,300),'beta':(0,50)}  #uniform
     # pro_config={'c':(2,20),'r':(10,100),'v':(5,20)}
-    pro_num=8
-    pro_config['num_pro']=0.5
+    pro_num=16
+    # pro_config['num_pro']=0.5
+    temp=np.array([0]*7+[1]*9)
+    pro_config['p']=temp/temp.sum()
     # pro_config['num_pro']=np.ones(pro_num)/pro_num
     # pro_config['num_pro']=[0,0,0,0,1]
     PF=Pro_Flow(1,0,pro_config,pro_num,writer,True)
     # jc={'k':0.5,'r':(10,2),'loc_mean':(-10,10),'loc_scale':0.1,'time':(2,0)} #2,0???
-    jc={'k':0.5,'r':(1,0.15),'loc_mean':(-1,1),'loc_scale':1,'time':(5,0)} #2,0???
+    jc={'k':0.5,'r':(1,0.15),'loc_mean':(-1,1),'loc_scale':0.5,'time':(10,0)} #2,0??? not change
+    jc={'r':(1,0.15),'loc_mean':(-1,1),'loc_scale':0.5,'time':(10,0)} #2,0??? change
     # jc={'k':0.5,'r':(10,200),'loc_mean':(-100,100),'loc_scale':1,'time':(20,0)}
     tasknum=8
+    temp=np.array([1]*8)
+    jc['p']=temp/temp.sum()
     env_steps=100
-    JF=Job_Flow(0,jc,tasknum,env_steps)
+    JF=Job_Flow_Change(0,jc,tasknum,env_steps)
     # JF.cal_mean_scale(1000)
     env=NEW_ENV(PF,JF,env_steps,writer)
     pprint(env.pf.pros.ps)
 
     # env.normalize(1000)
-    # np.save('md_li_ab1',env.md)
-    # np.save('sd_li_ab1',env.sd)
-    # env.md=np.load('md_li_ab0.5.npy')
-    # env.sd=np.load('sd_li_ab0.5.npy')
-    env.md=np.load('md_li_ab1.npy')
-    env.sd=np.load('sd_li_ab1.npy')
+    # np.save('md_li_ab_change',env.md)
+    # np.save('sd_li_ab_change',env.sd)
+    env.md=np.load('md_li_ab_change.npy')
+    env.sd=np.load('sd_li_ab_change.npy')
     print('md',env.md,'sd',env.sd)
 
     # anet=QNet(env.state_size,1,500,2,500,env.pros.num,env.jf.tasknum).to(device)

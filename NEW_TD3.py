@@ -14,10 +14,12 @@ import torch.nn.utils as nn_utils
 
 def onehot_from_logits(logits, eps):
     ''' 生成最优动作的独热(one-hot)形式 '''
-    logits+=torch.randn(size=logits.shape,device=logits.device)*1e-1
+    r=torch.randn(size=logits.shape,device=logits.device)*1e-1
+    logits+=r
     hhh=(logits == logits.max(-1, keepdim=True)[0]).float()
     while not (hhh.sum(-1)<1.5).all():
-        logits+=torch.randn(size=logits.shape,device=logits.device)*1e-1
+        r=torch.randn(size=logits.shape,device=logits.device)*1e-1
+        logits+=r
         hhh=(logits == logits.max(-1, keepdim=True)[0]).float()
         print('same')
         # index=hhh.sum(-1).reshape(-1).argmax()
@@ -115,11 +117,12 @@ class TD3:
     
     def update(self,transition_dict:dict):
         self.num_update+=1
-        # if (self.num_update%50)==0:
-        #     if self.eps>0.01:
-        #         self.eps*=0.96
-        #     if self.tem>0.1:
-        #         self.tem*=0.96
+        if (self.num_update%500)==0:
+            # if self.eps>0.01:
+            #     self.eps*=0.96
+            # if self.tem>0.1:
+            #     self.tem*=0.96
+            self.tem=max(0.5,np.exp(-self.num_update*1e-5))
 
         # F=lambda x:torch.tensor(np.array(x),dtype=torch.float32).to(self.device)
         # # states=fstate(lambda x:F(np.concatenate(x,axis=0)),transition_dict['states'])

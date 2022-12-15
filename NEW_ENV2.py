@@ -1,9 +1,9 @@
 import numpy as np
 from torch.utils.tensorboard import SummaryWriter
-from NEW_JobFlow import Pro_Flow,Job_Flow
+from NEW_JobFlow import Pro_Flow,Job_Flow_Change
 
 class NEW_ENV:
-    def __init__(self,pf:Pro_Flow,jf:Job_Flow,maxsteps,writer:SummaryWriter):
+    def __init__(self,pf:Pro_Flow,jf:Job_Flow_Change,maxsteps,writer:SummaryWriter):
         self.pf=pf
         self.jf=jf
         self.md=0
@@ -143,8 +143,15 @@ class RandomAgent:
         r=self.rng.choice(int(state[:self.pn].sum()),self.tn)
         act[range(self.tn),r]=1
         return act
+    
+    # def take_action(self,state):
+    #     act=np.zeros((self.tn,self.pn),dtype=np.int32)
+    #     r=self.rng.choice(self.pn,size=self.tn,p=state[:self.pn]/state[:self.pn].sum())
+    #     act[range(self.tn),r]=1
+    #     return act
 
 if __name__=='__main__':
+    from NEW_JobFlow import Job_Flow
     device='cuda'
     writer=None
     pro_config={'c':(1,0),'r':(1,0),'v':(1,0)}
