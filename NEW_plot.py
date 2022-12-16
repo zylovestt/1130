@@ -20,7 +20,7 @@ class Plot_Summary:
         plt.legend()
         plt.savefig('test_reward.jpg',bbox_inches='tight')
     
-    def plot_latest_rewards(self,agents):
+    def plot_latest(self,agents):
         assert len(agents)
         if len(agents)>1:
             self.curs.execute('''select max(date),recordname from recordvalue
@@ -32,8 +32,29 @@ class Plot_Summary:
             group by recordname'''%agents[0])
         rows=self.curs.fetchall()
         self.plot_test_rewards(*zip(*rows))
+        self.plot_loss(*zip(*rows))
+    
+    def plot_loss(self,date_times,agents):
+        for t,a in zip(date_times,agents):
+            self.curs.execute('''select distinct recordname from recordvalue
+                where date='%s' and algorithm='%s'
+                '''%(t,a))
+            rows=self.curs.fetchall()
+            for r,*_ in rows:
+                self.curs.execute('''select recordsize from recordvalue
+                    where date='%s' and algorithm='%s' and recordname='%s'
+                    order by step'''%(t,a,r))
+                values=self.curs.fetchall()
+                plt.figure()
+                plt.xlabel('step')
+                plt.ylabel('loss')
+                plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
+                plt.plot(range(len(values)),values,label=a+'_'+r)
+                plt.legend()
+                plt.savefig(a+'_'+r,bbox_inches='tight')
+
 
 if __name__=='__main__':
     pls=Plot_Summary('record.db')
-    pls.plot_latest_rewards(['td3','ac','sac','dqn','ppo'])
+    pls.plot_latest(['td3','ac','sac','dqn','ppo'])
 

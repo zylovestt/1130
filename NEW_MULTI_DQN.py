@@ -29,11 +29,12 @@ class MULTI_DQN:
         # self.critic_criterion = torch.nn.MSELoss()
         self.device=device
         self.explore=True
-        self.tau=tau
+        # self.tau=tau
         self.task_num=self.actor.task_num
         self.pro_num=self.actor.pro_num
         self.critic1=self.critic2=self.target_critic1=self.target_critic2=None
         self.critic_optimizer1=self.critic_optimizer2=None
+        self.c_epochs=3
         self.clip_grad=clip_grad
         self.conn=conn
         self.curs=curs
@@ -56,21 +57,23 @@ class MULTI_DQN:
         with torch.no_grad():
             q_target=(rewards+self.gamma*self.target_actor(next_states).max(axis=-1)[0])
         # loss=self.critic_criterion((self.actor(states)*(actions.reshape(-1,8,8))).sum(dim=-1),q_target)
-        loss=FU.mse_loss((self.actor(states)*(actions.reshape(-1,self.task_num,self.pro_num))).sum(dim=-1),q_target)
-        # print('loss',loss)
-        self.actor_optimizer.zero_grad()
-        loss.backward()
-        if not self.clip_grad=='max':
-            nn_utils.clip_grad_norm_(self.actor.parameters(),self.clip_grad)
-        self.actor_optimizer.step()
-        self.update_all_targets()
-        self.insert_data(self.step,'critic_loss',loss)
-        self.step+=1
+        for _ in range(self.c_epochs):
+            loss=FU.mse_loss((self.actor(states)*(actions.reshape(-1,self.task_num,self.pro_num))).sum(dim=-1),q_target)
+            # print('loss',loss)
+            self.actor_optimizer.zero_grad()
+            loss.backward()
+            if not self.clip_grad=='max':
+                nn_utils.clip_grad_norm_(self.actor.parameters(),self.clip_grad)
+            self.actor_optimizer.step()
+            self.insert_data(self.step,'critic_loss',loss)
+            self.step+=1
+        if (self.step%(500*self.c_epochs))==0:
+            self.target_actor=deepcopy(self.actor)
     
-    def update_all_targets(self):
-        self.soft_update(self.actor, self.target_actor)
+    # def update_all_targets(self):
+    #     self.soft_update(self.actor, self.target_actor)
     
-    def soft_update(self, net, target_net):
-        for param_target, param in zip(target_net.parameters(),net.parameters()):
-            param_target.data.copy_(param_target.data * (1.0 - self.tau) + param.data * self.tau)
+    # def soft_update(self, net, target_net):
+    #     for param_target, param in zip(target_net.parameters(),net.parameters()):
+    #         param_target.data.copy_(param_target.data * (1.0 - self.tau) + param.data * self.tau)
         
