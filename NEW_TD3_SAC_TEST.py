@@ -24,18 +24,23 @@ if __name__=='__main__':
     qoptim1=torch.optim.NAdam(td3_qnet1.parameters(),lr=1e-3,eps=1e-8) # lr=1e-3
     qoptim2=torch.optim.NAdam(td3_qnet2.parameters(),lr=1e-3,eps=1e-8) # lr=1e-3
     # anet,qnet1,qnet2,aoptim,qoptim1,qoptim2, tau, gamma, device,writer
-    agent=TD3_SAC(td3_anet,td3_qnet1,td3_qnet2,aoptim,qoptim1,qoptim2,1e-2,0.95,device,writer,1e-1,0.5,1e-2,conn,curs,date_time)
+    agent=TD3_SAC(td3_anet,td3_qnet1,td3_qnet2,aoptim,qoptim1,qoptim2,1e-2,0.95,device,writer,1e-1,1,1e-2,conn,curs,date_time)
     replay_buffer = Quick_ReplayBuffer(100000,device,env.state_size,env.action_size)
-    test_cycles=1000
-    test_epochs=500
-    return_list=mppp_train_off_policy_agent(0,env,agent,50000,replay_buffer,10000,1024,10,test_cycles,test_epochs)
-    print('start test')
-    ra=RandomAgent(9,env.pros.num,env.jf.tasknum)
-    FTEST=lambda x:model_test(0,env,x,test_epochs)
-    agent.explore=False
-    print('agent:',FTEST(agent))
-    print('random:',FTEST(ra))
-    model_test(0,env,agent,1,True)
+    test_model=False
+    if test_model: 
+        agent.load_model('td3sac_actor')
+    else:
+        test_cycles=1000
+        test_epochs=500
+        return_list=mppp_train_off_policy_agent(0,env,agent,10000,replay_buffer,10000,1024,10,test_cycles,test_epochs)
+        agent.save_model('td3sac_actor')
+        ra=RandomAgent(9,env.pros.num,env.jf.tasknum)
+        FTEST=lambda x:model_test(0,env,x,test_epochs)
+        # agent.explore=False
+        print('start test')
+        print('agent:',FTEST(agent))
+        print('random:',FTEST(ra))
+    model_test(137,env,agent,1,True)
     print('time:',time.time()-start)
     conn.commit()
     curs.close()

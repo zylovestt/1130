@@ -58,7 +58,7 @@ class NEW_ENV:
         # s_pro=pros.ps[['k','c','r','v','alpha','beta','lx','ly'] if self.pf.change else ['k','alpha','beta','lx','ly']].values
         # s_pro=pros.ps[['k','c','r','v','alpha','beta','lx','ly']].values
         # s_pro=np.array([list(t.values() if t=='k' else t.values()/100) for t in pros.ps])
-        s_pro=np.array([list(t.values()) for t in pros.ps])
+        s_pro=np.array([list(t.values())[1:] for t in pros.ps])
         # s_pro[:,1:]/=10
         s_pro[:,-2:]=np.maximum(s_pro[:,-2:]-self.jf.delta_time,0)
         s_pro[:,-2:]/=100
@@ -72,11 +72,12 @@ class NEW_ENV:
         # s_task=np.concatenate([s_job,jt.values.T.reshape(1,-1)],axis=1)
         # s_task=np.concatenate([s_job,job.tasks.values.T.reshape(1,-1)],axis=1)
 
-        s_task=np.array(list(job.tasks_col.values()))
+        s_task=np.array(list(job.tasks_col.values()))[1:]
         # s_task[1:]/=100
         # s_task=np.array([list(t.values() if t=='k' else t.values()/100) for t in job.tasks])
         # result=np.concatenate([s_pro.T.reshape(1,-1),s_job,s_task.reshape(1,-1)],axis=1).astype(np.float32)
         result=np.concatenate([s_pro.T.reshape(1,-1),s_task.reshape(1,-1)],axis=1).astype(np.float32)
+        # result-=np.random.normal(1e-4,scale=1e-5,size=result.shape)
         if maddpg:
             return [result.reshape(-1)]*self.jf.tasknum
         return result.reshape(-1)
@@ -140,7 +141,7 @@ class RandomAgent:
 
     def take_action(self,state):
         act=np.zeros((self.tn,self.pn),dtype=np.int32)
-        r=self.rng.choice(int(state[:self.pn].sum()),self.tn)
+        r=self.rng.choice(int((state[:self.pn]>0).sum()),self.tn)
         act[range(self.tn),r]=1
         return act
     

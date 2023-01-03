@@ -152,3 +152,9 @@ class SAC:
         probs_new=self.actor(states)
         kl=((FU.log_softmax(probs_new,dim=1)-FU.log_softmax(probs,dim=1))*FU.softmax(probs_new,dim=1)).sum(dim=1).mean().item() # not accurate
         self.writer.add_scalar('KL', kl, self.step)
+    
+    def save_model(self,path):
+        torch.save(self.actor,path)
+    
+    def load_model(self,path):
+        self.actor=torch.load(path)

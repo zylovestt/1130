@@ -57,6 +57,31 @@ class BEST_PATH:
 
     def swap_seq(self,i,j):
         self.seq[i],self.seq[j]=self.seq[j],self.seq[i]
+    
+    def dp(self):
+        INF=float('inf')
+        m=self.num_task
+        l=[[INF]*m for _ in range(1<<m)]
+        p=deepcopy(l)
+        for i in range(m):
+            l[1<<i][i]=self.cal_loc(-1,i)
+        for i in range(1<<m):
+            for j in range(m):
+                if(i>>j&1):
+                    for k in range(m):
+                        if(i>>k&1):
+                            if l[i-(1<<j)][k]+self.cal_loc(k,j)<l[i][j]:
+                                l[i][j]=min(l[i][j],l[i-(1<<j)][k]+self.cal_loc(k,j))
+                                p[i][j]=k
+        r=np.argmin(l[-1])
+        best=[r]
+        i=(1<<m)-1
+        for _ in range(m-1):
+            best.append(p[i][best[-1]])
+            i-=(1<<best[-2])
+        best.reverse()
+        self.shortest_time_a,self.shortest_time=self.iter_element(best)
+        self.best_seq=best
 
     def trackback(self):
         if self.cur==self.num_task:
@@ -130,7 +155,9 @@ class BEST_PATH:
 if __name__=='__main__':
     import time
     begin={'lx':0,'ly':0,'b':0}
-    tasks=[{'lx':0,'ly':1,'r':2},{'lx':1,'ly':0,'r':1},{'lx':3,'ly':4,'r':2},{'lx':0,'ly':0,'r':1}]
+    # tasks=[{'lx':0,'ly':1,'r':2},{'lx':1,'ly':0,'r':1},{'lx':3,'ly':4,'r':2},{'lx':0,'ly':0,'r':1},{'lx':0,'ly':0,'r':1}]*3
+    tasks=[{'lx':0,'ly':1,'r':2},{'lx':1,'ly':0,'r':1}]*5
+
     start=time.time()
     tr=BEST_PATH(begin,tasks,1,1,1)
     tr.trackback()
@@ -151,4 +178,12 @@ if __name__=='__main__':
     print(tr.shortest_time,tr.shortest_time_a,tr.best_seq)
     print(tr.seq)
     print(time.time()-start)
+
+    start=time.time()
+    tr=BEST_PATH(begin,tasks,1,1,1)
+    tr.dp()
+    print(tr.shortest_time,tr.shortest_time_a,tr.best_seq)
+    print(tr.seq)
+    print(time.time()-start)
+
     print(np.array(tr.loc_array))

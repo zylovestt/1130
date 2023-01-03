@@ -46,7 +46,7 @@ def gumbel_softmax(logits, temperature,eps):
 
 class TD3_SAC:
     def __init__(self, anet:torch.nn.Module,qnet1:torch.nn.Module,qnet2:torch.nn.Module,aoptim,qoptim1,qoptim2, tau, gamma, device,writer:SummaryWriter,clip_grad,alpha_lr,target_entropy,conn,curs,date_time):
-        self.name='td3'
+        self.name='td3sac'
         self.actor = anet
         self.target_actor=deepcopy(anet)
         self.critic1 = qnet1
@@ -84,25 +84,7 @@ class TD3_SAC:
         self.target_entropy = target_entropy  # 目标熵的大小
     
     def insert_data(self,step,name,value):
-        self.curs.execute("insert into recordvalue values('%s','td3','%s',%d,%f)"%(self.date_time,name,step,value))
-    
-    # def take_action(self,state):
-    #     # a=(self.actor(fstate(lambda x:torch.tensor(x,dtype=torch.float32).to(self.device),state)))
-    #     F=lambda x:torch.tensor(np.array(x),dtype=torch.float32).to(self.device)
-    #     with torch.no_grad():
-    #         a=self.actor(F(state).unsqueeze(0))
-    #     if self.explore:
-    #         # a=gumbel_softmax(a,self.tem,self.eps)[0]
-    #         a=FU.gumbel_softmax(a,tau=self.tem,dim=-1,hard=True)[0]
-
-    #         # b=torch.distributions.Categorical(logits=a[0]).sample().detach().cpu().numpy()
-    #         # act=np.zeros(a.shape[1:],dtype='int32')
-    #         # act[range(act.shape[0]),b]=1
-    #         # return act
-    #     else:
-    #         a=onehot_from_logits(a,self.eps)[0]
-    #     return a.detach().cpu().numpy()
-    #     # return (a.detach().cpu().numpy()[0]>0.99).astype('int')
+        self.curs.execute("insert into recordvalue values('%s','td3sac','%s',%d,%f)"%(self.date_time,name,step,value))
 
     def take_action(self,state:np.ndarray):
         # a=self.actor(fstate(lambda x:torch.tensor(x,dtype=torch.float32).to(self.device),state))[0]
@@ -143,33 +125,8 @@ class TD3_SAC:
 
     def update(self,transition_dict:dict):
         self.num_update+=1
-        # if (self.num_update%50)==0:
-        #     if self.eps>0.01:
-        #         self.eps*=0.96
-        #     if self.tem>0.1:
-        #         self.tem*=0.96
-
-        # F=lambda x:torch.tensor(np.array(x),dtype=torch.float32).to(self.device)
-        # # states=fstate(lambda x:F(np.concatenate(x,axis=0)),transition_dict['states'])
-        # # next_states=fstate(lambda x:F(np.concatenate(x,axis=0)),transition_dict['next_states'])
-        # states=F(transition_dict['states'])
-        # next_states=F(transition_dict['next_states'])
-        # actions=F(np.vstack(transition_dict['actions']).reshape(-1,*transition_dict['actions'][0].shape))
-        # assert (actions.sum(axis=-1)).all(),'actions wrong'
-        # # print('actions',actions)
-        # rewards=F(transition_dict['rewards']).reshape(-1,1)
-
         states,next_states,actions,rewards=(transition_dict['states'],transition_dict['next_states'],
                                             transition_dict['actions'],transition_dict['rewards'])
-
-        self.critic_optimizer1.zero_grad()
-        self.critic_optimizer2.zero_grad()
-
-        # target_act=onehot_from_logits(self.target_actor(next_states),self.eps) #@@@@@@@@@@@@@@@@@@@
-        # # target_act=gumbel_softmax(self.target_actor(next_states),self.tem,self.eps) #@@@@@@@@@@@@@@@@@@@
-        # target_critic_input = torch.cat((next_states,target_act.reshape(target_act.shape[0],-1)), dim=-1)
-        # target_critic_value = rewards + self.gamma * torch.min(
-        #     self.target_critic1(target_critic_input),self.target_critic2(target_critic_input)) #change
         critic_input = torch.cat((states,actions.reshape(actions.shape[0],-1)),dim=-1)
         td_target = self.calc_target(rewards, next_states, 0)
         
@@ -193,60 +150,13 @@ class TD3_SAC:
             critic_loss2.backward()
             if not self.clip_grad=='max':
                 nn_utils.clip_grad_norm_(self.critic2.parameters(),self.clip_grad)
-            
-
-            
-            # if not self.clip_grad=='max':
-            #         nn_utils.clip_grad_norm_(self.critic1.parameters(),self.clip_grad)
-            # if not self.clip_grad=='max':
-            #         nn_utils.clip_grad_norm_(self.critic2.parameters(),self.clip_grad)
 
             self.critic_optimizer1.step()
             self.critic_optimizer2.step()
-
-            # self.curs.execute("insert into recordvalue values('%s','td3','critic_loss1',self.c_epochs*self.num_update+i,%f)"%self.date_time,critic_loss1)
-            # self.curs.execute("insert into recordvalue values('%s','td3','critic_loss2',self.c_epochs*self.num_update+i,%f)"%self.date_time,critic_loss2)
             self.insert_data(self.c_epochs*self.num_update+i,'critic_loss1',critic_loss1)
             self.insert_data(self.c_epochs*self.num_update+i,'critic_loss2',critic_loss2)
-            # self.conn.commit()
-            # self.writer.add_scalar('critic_loss1',critic_loss1,self.c_epochs*self.num_update+i)
-            # self.writer.add_scalar('critic_loss2',critic_loss2,self.c_epochs*self.num_update+i)
 
         if (self.num_update%self.update_cycles)==0:
-            # self.actor_optimizer.zero_grad()
-            # actor_out = self.actor(states)
-            # # act_vf_in = gumbel_softmax(actor_out,self.tem,self.eps)
-            # act_vf_in=FU.gumbel_softmax(actor_out,tau=self.tem,dim=-1,hard=True)
-            # vf_in = torch.cat((states, act_vf_in.reshape(act_vf_in.shape[0],-1)), dim=1)
-
-            
-            # self.critic1.requires_grad_(False)
-            # self.critic2.requires_grad_(False)
-            # actor_loss = -torch.min(self.critic1(vf_in),self.critic2(vf_in)).mean() #ffffffffffffffff
-            # # actor_loss = -self.critic1(vf_in).mean() #ffffffffffffffff
-            # self.critic1.requires_grad_(True)
-            # self.critic2.requires_grad_(True)
-            # actor_norm = (((actor_out>-1e7).float()*actor_out)**2).mean()
-            # # actor_norm = (actor_out**2).mean()
-            # # actor_loss += actor_norm*1e-3
-            # epo_loss=(FU.softmax(actor_out,dim=-1)*FU.log_softmax(actor_out,dim=-1)).sum(dim=-1).mean()
-            # # (actor_loss+epo_loss*2e-1).backward()
-            # (actor_loss+actor_norm*1e-3).backward()
-            # # actor_loss.backward()
-            # if not self.clip_grad=='max':
-            #         nn_utils.clip_grad_norm_(self.actor.parameters(),self.clip_grad)
-            # self.actor_optimizer.step()
-            # # self.curs.execute("insert into recordvalue values('%s','td3','actor_loss',self.num_update//self.update_cycles,%f)"%self.date_time,critic_loss1)
-            # # self.curs.execute("insert into recordvalue values('%s','td3','actor_norm',self.num_update//self.update_cycles,%f)"%self.date_time,actor_norm)
-            # # self.curs.execute("insert into recordvalue values('%s','td3','critic_loss2',self.num_update//self.update_cycles,%f)"%self.date_time,critic_loss2)
-            # self.insert_data(self.num_update//self.update_cycles,'actor_loss',actor_loss)
-            # self.insert_data(self.num_update//self.update_cycles,'actor_norm',actor_norm)
-            # self.insert_data(self.num_update//self.update_cycles,'epo_loss',epo_loss)
-            # # self.conn.commit()
-
-            # # self.writer.add_scalar('actor_loss',actor_loss,self.num_update//self.update_cycles)
-            # # self.writer.add_scalar('actor_norm',actor_norm,self.num_update//self.update_cycles)
-            # # self.writer.add_scalar('epo_loss',epo_loss,self.num_update//self.update_cycles)
 
 
             # 更新策略网络
@@ -256,8 +166,6 @@ class TD3_SAC:
             log_probs = FU.log_softmax(actor_out,dim=-1)
             # 直接根据概率计算熵
             entropy = -torch.sum(probs * log_probs, dim=-1, keepdim=False).mean(dim=-1,keepdim=True)  #
-
-            
             # act_vf_in = gumbel_softmax(actor_out,self.tem,self.eps)
             act_vf_in = FU.gumbel_softmax(actor_out,tau=self.tem,dim=-1,hard=True)
             vf_in = torch.cat((states, act_vf_in.reshape(act_vf_in.shape[0],-1)), dim=-1)
@@ -271,14 +179,22 @@ class TD3_SAC:
 
             min_qvalue = torch.min(q1_value, q2_value)
 
-                                
             actor_loss = torch.mean(-self.log_alpha.exp() * entropy - min_qvalue)
+            actor_norm = (((actor_out>-1e7).float()*actor_out)**2).mean()
+            # actor_norm = (actor_out**2).mean()
+            # actor_loss += actor_norm*1e-3
+            epo_loss=(FU.softmax(actor_out,dim=-1)*FU.log_softmax(actor_out,dim=-1)).sum(dim=-1).mean()
             self.actor_optimizer.zero_grad()
-            # print('al',actor_loss)
-            actor_loss.backward()
+            # (actor_loss+epo_loss*2e-1).backward()
+            (actor_loss+actor_norm*1e-3).backward()
+            # actor_loss.backward()
             if not self.clip_grad=='max':
-                nn_utils.clip_grad_norm_(self.actor.parameters(),self.clip_grad)
+                    nn_utils.clip_grad_norm_(self.actor.parameters(),self.clip_grad)
             self.actor_optimizer.step()
+            step=self.num_update//self.update_cycles
+            self.insert_data(step,'actor_loss',actor_loss)
+            self.insert_data(step,'actor_norm',actor_norm)
+            self.insert_data(step,'epo_loss',epo_loss)
 
             #更新alpha值
             alpha_loss = torch.mean(
@@ -301,3 +217,9 @@ class TD3_SAC:
     def soft_update(self, net, target_net):
         for param_target, param in zip(target_net.parameters(),net.parameters()):
             param_target.data.copy_(param_target.data * (1.0 - self.tau) + param.data * self.tau)
+    
+    def save_model(self,path):
+        torch.save(self.actor,path)
+    
+    def load_model(self,path):
+        self.actor=torch.load(path)

@@ -161,3 +161,9 @@ class MULTI_SAC:
         self.insert_data(self.step,'epo_loss',entropy.mean())
         self.insert_data(self.step,'alpha_loss',alpha_loss)
         self.step+=1
+    
+    def save_model(self,path):
+        torch.save(self.actor,path)
+    
+    def load_model(self,path):
+        self.actor=torch.load(path)

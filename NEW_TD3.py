@@ -27,6 +27,13 @@ def onehot_from_logits(logits, eps, beta1=1e-1,beta2=1e-1):
         # u=logits[index//act_size,(index%act_size)//logits.shape[]]
     assert (hhh.sum(-1)<1.001).all()
     return hhh
+
+def onehot_from_logits_quick(logits, eps, beta1=1e-1):
+    ''' 生成最优动作的独热(one-hot)形式 '''
+    r=torch.randn(size=logits.shape,device=logits.device)*beta1
+    logits+=r
+    hhh=(logits == logits.max(-1, keepdim=True)[0]).float()
+    return hhh
     
 def sample_gumbel(shape, eps=1e-10, tens_type=torch.FloatTensor):
     """从Gumbel(0,1)分布中采样"""
@@ -70,6 +77,8 @@ class TD3:
         self.explore=True
         self.eps=0.0
         self.tem=1
+        self.beta1=1e-1
+        self.beta2=1e-1
         self.num_update=0
         self.conn=conn
         self.curs=curs
@@ -95,7 +104,7 @@ class TD3:
             # act[range(act.shape[0]),b]=1
             # return act
         else:
-            a=onehot_from_logits(a,self.eps)[0]
+            a=onehot_from_logits(a,self.eps,self.beta1,self.beta2)[0]
         return a.detach().cpu().numpy()
         # return (a.detach().cpu().numpy()[0]>0.99).astype('int')
     
@@ -121,7 +130,10 @@ class TD3:
             #     self.eps*=0.96
             # if self.tem>0.1:
             #     self.tem*=0.96
-            self.tem=max(0.5,np.exp(-self.num_update*1e-5))
+            upbound=np.exp(-self.num_update*1e-5)
+            self.tem=max(0.5,upbound)
+            self.beta1=max(1e-3,upbound*1e-1)
+            self.beta2=max(1e-3,upbound*1e-1)
 
         # F=lambda x:torch.tensor(np.array(x),dtype=torch.float32).to(self.device)
         # # states=fstate(lambda x:F(np.concatenate(x,axis=0)),transition_dict['states'])
@@ -137,7 +149,7 @@ class TD3:
                                             transition_dict['actions'],transition_dict['rewards'])
 
         
-        target_act=onehot_from_logits(self.target_actor(next_states),self.eps) #@@@@@@@@@@@@@@@@@@@
+        target_act=onehot_from_logits_quick(self.target_actor(next_states),self.eps,self.beta1) #@@@@@@@@@@@@@@@@@@@
         # target_act=FU.gumbel_softmax(self.target_actor(next_states),tau=self.tem,dim=-1,hard=False) #@@@@@@@@@@@@@@@@@@@
         # target_act=gumbel_softmax(self.target_actor(next_states),self.tem,self.eps) #@@@@@@@@@@@@@@@@@@@
         target_critic_input = torch.cat((next_states,target_act.reshape(target_act.shape[0],-1)), dim=-1)
@@ -185,7 +197,7 @@ class TD3:
                 actor_norm = (((actor_out>-1e7).float()*actor_out)**2).mean()
                 # actor_loss += actor_norm*1e-3
                 epo_loss=(FU.softmax(actor_out,dim=-1)*FU.log_softmax(actor_out,dim=-1)).sum(dim=-1).mean()
-                # (actor_loss+epo_loss*2e-1).backward()
+                # (actor_loss+epo_loss*1e-1+actor_norm*1e-3).backward()
                 (actor_loss+actor_norm*1e-3).backward()
                 # actor_loss.backward()
                 if not self.clip_grad=='max':
@@ -218,7 +230,7 @@ class TD3:
 
 class DDPG:
     def __init__(self, anet:torch.nn.Module,qnet1:torch.nn.Module,qnet2:torch.nn.Module,aoptim,qoptim1,qoptim2, tau, gamma, device,writer,clip_grad,conn,curs,date_time):
-        self.name='td3'
+        self.name='ddpg'
         self.actor = anet
         self.target_actor=deepcopy(anet)
         self.critic1 = qnet1
@@ -249,7 +261,7 @@ class DDPG:
         self.target_critic2.requires_grad_(False)
     
     def insert_data(self,step,name,value):
-        self.curs.execute("insert into recordvalue values('%s','td3','%s',%d,%f)"%(self.date_time,name,step,value))
+        self.curs.execute("insert into recordvalue values('%s','ddpg','%s',%d,%f)"%(self.date_time,name,step,value))
     
     def take_action(self,state):
         # a=(self.actor(fstate(lambda x:torch.tensor(x,dtype=torch.float32).to(self.device),state)))

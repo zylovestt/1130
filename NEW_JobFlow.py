@@ -1,6 +1,6 @@
 import numpy as np
 import numpy as np
-from torch.utils.tensorboard import SummaryWriter
+# from torch.utils.tensorboard import SummaryWriter
 from NEW_Traceback import BEST_PATH
 from copy import deepcopy
 
@@ -13,7 +13,7 @@ class JOB:
         # self.real_tasknum=self.tasks['k'].sum()
 
 class PROS:
-    def __init__(self,seed,ps,writer:SummaryWriter):
+    def __init__(self,seed,ps,writer):
         self.rng=np.random.RandomState(seed)
         self.writer=writer
         self.global_step=0
@@ -56,7 +56,8 @@ class PROS:
                 TU=[{'r':row['r'],'lx':row['lx'],'ly':row['ly']} for row in TU]
                 begin_b=p['beta']-p['alpha']
                 best_path=BEST_PATH({'lx':p['lx'],'ly':p['ly'],'b':begin_b},TU,p['v'],p['c'],p['r'])
-                best_path.trackback_iter()
+                # best_path.trackback_iter()
+                best_path.dp()
                 p['alpha']+=best_path.shortest_time_a
                 p['beta']+=(best_path.shortest_time-begin_b)
                 p['lx']=TU[best_path.best_seq[-1]]['lx']
@@ -117,7 +118,7 @@ class Pro_Flow:
             # p={key:np.zeros(n) for key in columns}
             # p=pd.DataFrame(np.zeros((self.num,len(columns))),columns=columns)
             # RF=lambda x,y:rng.normal(*self.pro_config[x],y)
-            RF=lambda x,y:rng.uniform(*self.pro_config[x],y)
+            RF=lambda x,y:rng.normal(self.pro_config[x][0],rng.uniform(*self.pro_config[x][1:]),y)
             num_pro=self.rng.choice(self.num,p=self.pro_config['p'])+1
             # num_pro=self.rng.binomial(n-1,self.pro_config['num_pro'])+1
             # s=self.rng.choice(n,size=num_pro,replace=False)
@@ -239,20 +240,22 @@ class Job_Flow_Change:
         tasknum=self.tasknum
         max_length=self.max_length
         job_config=self.job_config
-        self.k_num=np.empty(self.max_length)
-        self.k_num[:]=rng.choice(tasknum,p=self.job_config['p'])
+        # self.k_num=np.empty(self.max_length)
+        # self.k_num[:]=rng.choice(tasknum,p=self.job_config['p'])
+        self.k_num=rng.choice(tasknum,p=self.job_config['p'],size=max_length)
         size=(max_length,tasknum)
         a=np.empty(size)
         a[:]=np.arange(tasknum).reshape(1,-1)
         self.k_mask=(a<=self.k_num.reshape(-1,1)).astype('float')
         # self.k_mask=np.array([self.rng.shuffle(self.k_mask[i]) for i in range(len(self.k_mask))])
-        self.r=rng.normal(*job_config['r'],size)
+        rscale=self.rng.uniform(*job_config['r'][1:])
+        self.r=rng.normal(job_config['r'][0],rscale,size)
         
         # self.r*=self.k_mask
         # self.r=rng.uniform(*job_config['r'],size)
         assert (self.r>=0).all()
         loc_mean=rng.uniform(*job_config['loc_mean'],size=(max_length,2))
-        scale=self.rng.uniform(high=job_config['loc_scale'])
+        scale=self.rng.uniform(*job_config['loc_scale'][1:])
         # loc_XY=np.empty((max_length,2*tasknum))
         # for x,loc in zip(loc_XY,loc_mean):
         #     x[:]=rng.normal(loc,scale,2*tasknum)
@@ -266,7 +269,7 @@ class Job_Flow_Change:
         self.loc_Y*=self.k_mask
         # self.job_time_break=np.array([rng.exponential(x) for x in job_config['time']*max_length])
         # self.job_time_break=rng.normal(*job_config['time'],max_length)
-        lam=self.rng.uniform(job_config['time'][0])
+        lam=self.rng.uniform(*job_config['time'])
         self.job_time_break=rng.exponential(lam,max_length)
         self.step=0
         self.time=0

@@ -30,7 +30,7 @@ if __name__=='__main__':
     if test_model: 
         agent.load_model('ddpg_actor')
     else:
-        test_cycles=1000
+        test_cycles=1000 
         test_epochs=500
         return_list=mppp_train_off_policy_agent(0,env,agent,50000,replay_buffer,10000,1024,10,test_cycles,test_epochs)
         agent.save_model('ddpg_actor')

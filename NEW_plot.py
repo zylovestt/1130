@@ -56,5 +56,5 @@ class Plot_Summary:
 
 if __name__=='__main__':
     pls=Plot_Summary('record.db')
-    pls.plot_latest(['td3','ac','sac','dqn','ppo'])
-
+    pls.plot_latest(['td3','ac','sac','dqn','ppo','td3sac'])
+    # pls.plot_latest(['td3sac'])

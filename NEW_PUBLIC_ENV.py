@@ -32,8 +32,8 @@ def start_env(device):
     # writer=SummaryWriter(comment='NEW_ENV')
     writer=None
     # pro_config={'c':(10,2),'r':(50,10),'v':(10,2)}
-    # pro_config={'c':(1,0.15),'r':(5,0.75),'v':(0.1,0.015),'lx':(-1,1),'ly':(-1,1),'alpha':(0,300),'beta':(0,50)}  #normal
-    pro_config={'c':(0.4,1.6),'r':(2,8),'v':(0.04,0.16),'lx':(-1,1),'ly':(-1,1),'alpha':(0,300),'beta':(0,50)}  #uniform
+    pro_config={'c':(1,0,0.15),'r':(5,0,0.75),'v':(0.1,0,0.015),'lx':(-1,1),'ly':(-1,1),'alpha':(0,300),'beta':(0,50)}  #normal
+    # pro_config={'c':(0.4,1.6),'r':(2,8),'v':(0.04,0.16),'lx':(-1,1),'ly':(-1,1),'alpha':(0,300),'beta':(0,50)}  #uniform
     # pro_config={'c':(2,20),'r':(10,100),'v':(5,20)}
     pro_num=16
     # pro_config['num_pro']=0.5
@@ -43,11 +43,11 @@ def start_env(device):
     # pro_config['num_pro']=[0,0,0,0,1]
     PF=Pro_Flow(1,0,pro_config,pro_num,writer,True)
     # jc={'k':0.5,'r':(10,2),'loc_mean':(-10,10),'loc_scale':0.1,'time':(2,0)} #2,0???
-    jc={'k':0.5,'r':(1,0.15),'loc_mean':(-1,1),'loc_scale':0.5,'time':(10,0)} #2,0??? not change
-    jc={'r':(1,0.15),'loc_mean':(-1,1),'loc_scale':0.5,'time':(10,0)} #2,0??? change
+    # jc={'k':0.5,'r':(1,0.15),'loc_mean':(-1,1),'loc_scale':0.5,'time':(10,0)} #2,0??? not change
+    jc={'r':(1,0,0.15),'loc_mean':(-1,1),'loc_scale':(0,0.5),'time':(2,8)} #2,0??? change
     # jc={'k':0.5,'r':(10,200),'loc_mean':(-100,100),'loc_scale':1,'time':(20,0)}
     tasknum=8
-    temp=np.array([1]*8)
+    temp=np.array([1]*tasknum)
     jc['p']=temp/temp.sum()
     env_steps=100
     JF=Job_Flow_Change(0,jc,tasknum,env_steps)

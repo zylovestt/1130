@@ -128,7 +128,7 @@ class QNet2(nn.Module):
         mask=x[:,:self.pro_num].unsqueeze(1)
         a=torch.zeros_like(mask)
         a[:]=1e8
-        a*=(~(mask==1))
+        a*=(~(mask>0))
         return out-a
     
     # def _init_weights(self, m):

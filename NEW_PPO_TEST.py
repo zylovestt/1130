@@ -28,22 +28,23 @@ if __name__=='__main__':
     # agent.explore=False
     # FTEST(agent)
     # FTEST(ra)
-
-    test_epochs=500
-
     # update_steps=10
     # # train_on_policy_agent(0,env, agent, 10000,5,writer,200,test_epochs)
     # mpp_train_on_policy_agent(0,env, agent, 50000*update_steps,update_steps,1000*update_steps,test_epochs)
 
     update_steps=10
-    # train_on_policy_agent(0,env, agent, 10000,5,writer,200,test_epochs)
-    mppp_train_on_policy_agent(0,env, agent, 50000,update_steps,1000,test_epochs)
-
-    ra=RandomAgent(9,env.pros.num,env.jf.tasknum)
-    FTEST=lambda x:print(model_test(0,env,x,test_epochs))
-    agent.explore=False
-    FTEST(agent)
-    FTEST(ra)
-    conn.commit()
-    curs.close()
-    conn.close()
+    test_model=False
+    if test_model: 
+        agent.load_model('ppo_actor')
+    else:
+        test_cycles=1000
+        test_epochs=500
+        return_list=mppp_train_on_policy_agent(0,env, agent, 50000,update_steps,test_cycles,test_epochs)
+        agent.save_model('ppo_actor')
+        ra=RandomAgent(9,env.pros.num,env.jf.tasknum)
+        FTEST=lambda x:model_test(0,env,x,test_epochs)
+        # agent.explore=False
+        print('start test')
+        print('agent:',FTEST(agent))
+        print('random:',FTEST(ra))
+    model_test(137,env,agent,1,True)
